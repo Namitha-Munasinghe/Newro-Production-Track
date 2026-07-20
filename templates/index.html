@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Poultry Log Sheet</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f6f7; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .nav-link { float: right; background: #3498db; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; }
+        h2 { color: #2c3e50; margin-top: 0; }
+        .date-section { margin: 20px 0; }
+        .date-section input { padding: 6px; font-size: 1em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #bdc3c7; padding: 8px 12px; text-align: left; }
+        th { background-color: #ecf0f1; color: #2c3e50; }
+        input[type="number"] { width: 100%; border: 1px solid #eee; padding: 4px; box-sizing: border-box; }
+        .total-row { font-weight: bold; background-color: #eaeded; }
+        .btn-submit { display: block; width: 100%; padding: 12px; margin-top: 20px; background-color: #27ae60; color: white; border: none; font-size: 1.1em; border-radius: 5px; cursor: pointer; }
+        .alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+        .alert-success { background-color: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="/products" class="nav-link">Go to Product Manager →</a>
+    <h2>Poultry Daily Log Sheet</h2>
+    <hr>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/">
+        <div class="date-section">
+            <label for="date"><strong>Log Date:</strong></label>
+            <input type="date" id="date" name="date" value="{{ current_date }}" required>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50%;">Product (ID & Description)</th>
+                    <th style="width: 25%;">Birds</th>
+                    <th style="width: 25%;">Weight</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td><strong>{{ product.code }}</strong> - {{ product.name }}</td>
+                    <td>
+                        <input type="number" name="birds_{{ product.id }}" class="birds-input" min="0" placeholder="0">
+                    </td>
+                    <td>
+                        <input type="number" name="weight_{{ product.id }}" class="weight-input" min="0" step="0.01" placeholder="0.0">
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #7f8c8d;">No products added yet. Go to the Product Manager to add items.</td>
+                </tr>
+                {% endfor %}
+                
+                <tr class="total-row">
+                    <td>Total</td>
+                    <td id="total-birds">0</td>
+                    <td id="total-weight">0.0</td>
+                </tr>
+            </tbody>
+        </table>
+
+        {% if products %}
+        <button type="submit" class="btn-submit">Save Quantities</button>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+    const table = document.querySelector('table');
+    table.addEventListener('input', () => {
+        let totalBirds = 0;
+        let totalWeight = 0;
+
+        document.querySelectorAll('.birds-input').forEach(i => { if(i.value) totalBirds += parseInt(i.value); });
+        document.querySelectorAll('.weight-input').forEach(i => { if(i.value) totalWeight += parseFloat(i.value); });
+
+        document.getElementById('total-birds').innerText = totalBirds;
+        document.getElementById('total-weight').innerText = totalWeight.toFixed(1);
+    });
+</script>
+
+</body>
+</html>

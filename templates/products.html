@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f6f7; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .nav-link { float: right; background: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; }
+        h2 { color: #2c3e50; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-add { background-color: #2980b9; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+        th, td { border: 1px solid #bdc3c7; padding: 10px; text-align: left; }
+        th { background-color: #ecf0f1; }
+        .alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+        .alert-success { background-color: #d4edda; color: #155724; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="/" class="nav-link">← Back to Home Log Sheet</a>
+    <h2>Product Manager</h2>
+    <hr>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <h3>Add New Product Type</h3>
+    <form method="POST" action="/products">
+        <div class="form-group">
+            <label for="code">Product ID / Code (e.g., NW00001)</label>
+            <input type="text" id="code" name="code" placeholder="Enter code..." required>
+        </div>
+        <div class="form-group">
+            <label for="name">Product Name Description (e.g., Fresh Chicken)</label>
+            <input type="text" id="name" name="name" placeholder="Enter product details..." required>
+        </div>
+        <button type="submit" class="btn-add">Add Product to System</button>
+    </form>
+
+    <h3>Active Master Product List</h3>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 30%;">Product ID</th>
+                <th style="width: 70%;">Product Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td><strong>{{ product.code }}</strong></td>
+                <td>{{ product.name }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="2" style="text-align: center; color: #7f8c8d;">No products in database yet. Add your first item above!</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
