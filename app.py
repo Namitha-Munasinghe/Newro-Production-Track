@@ -13,12 +13,13 @@ db = SQLAlchemy(app)
 
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String(20), unique=True, nullable=False)  # e.g., NW00001
-    name = db.Column(db.String(100), nullable=False)              # e.g., Fresh Chicken
+    code = db.Column(db.String(20), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
 
 class EntryLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    shift = db.Column(db.String(10), nullable=False) # 'day' or 'night'
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     birds = db.Column(db.Integer, nullable=True)
     weight = db.Column(db.Float, nullable=True)
@@ -26,7 +27,6 @@ class EntryLog(db.Model):
     product = db.relationship('Product', backref=db.backref('logs', lazy=True))
 
 # --- DATABASE SEEDING ---
-# This automatically inserts the entire paperwork catalog if the database table is empty.
 def seed_products():
     initial_products = [
         {"code": "NW00001", "name": "Fresh Chicken"},
@@ -83,7 +83,6 @@ def seed_products():
         for p in initial_products:
             db.session.add(Product(code=p["code"], name=p["name"]))
         db.session.commit()
-        print("Success: All products populated from paperwork list!")
 
 with app.app_context():
     db.create_all()
@@ -91,7 +90,6 @@ with app.app_context():
 
 # --- ROUTES ---
 
-# 1. HOME PAGE: The Production Entry Sheet
 @app.route('/', methods=['GET', 'POST'])
 def home():
     if request.method == 'POST':
@@ -101,50 +99,51 @@ def home():
         products = Product.query.all()
         
         for product in products:
-            birds = request.form.get(f'birds_{product.id}')
-            weight = request.form.get(f'weight_{product.id}')
-            
-            # Save only if at least one field is filled out
-            if birds or weight:
-                log = EntryLog(
-                    date=entry_date,
-                    product_id=product.id,
-                    birds=int(birds) if birds else None,
-                    weight=float(weight) if weight else None
-                )
-                db.session.add(log)
+            # Process Day Shift
+            day_birds = request.form.get(f'day_birds_{product.id}')
+            day_weight = request.form.get(f'day_weight_{product.id}')
+            if day_birds or day_weight:
+                db.session.add(EntryLog(
+                    date=entry_date, shift='day', product_id=product.id,
+                    birds=int(day_birds) if day_birds else None,
+                    weight=float(day_weight) if day_weight else None
+                ))
+
+            # Process Night Shift
+            night_birds = request.form.get(f'night_birds_{product.id}')
+            night_weight = request.form.get(f'night_weight_{product.id}')
+            if night_birds or night_weight:
+                db.session.add(EntryLog(
+                    date=entry_date, shift='night', product_id=product.id,
+                    birds=int(night_birds) if night_birds else None,
+                    weight=float(night_weight) if night_weight else None
+                ))
                 
         db.session.commit()
-        flash("Production data saved successfully!", "success")
+        flash("Production data for both shifts saved successfully!", "success")
         return redirect(url_for('home'))
         
     products = Product.query.all()
     current_date = datetime.utcnow().strftime('%Y-%m-%d')
     return render_template('index.html', products=products, current_date=current_date)
 
-
-# 2. PRODUCT MANAGER PAGE: Add / View Products
 @app.route('/products', methods=['GET', 'POST'])
 def products_manager():
     if request.method == 'POST':
         code = request.form.get('code').strip()
         name = request.form.get('name').strip()
-        
         if code and name:
-            # Check if product code already exists
             existing = Product.query.filter_by(code=code).first()
             if existing:
                 flash(f"Product code {code} already exists!", "danger")
             else:
-                new_product = Product(code=code, name=name)
-                db.session.add(new_product)
+                db.session.add(Product(code=code, name=name))
                 db.session.commit()
                 flash(f"Product '{code} - {name}' added successfully!", "success")
         return redirect(url_for('products_manager'))
 
     all_products = Product.query.order_by(Product.code).all()
     return render_template('products.html', products=all_products)
-
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -4,90 +4,100 @@
     <meta charset="UTF-8">
     <title>Poultry Log Sheet</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f6f7; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f7; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .nav-link { float: right; background: #3498db; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; }
         h2 { color: #2c3e50; margin-top: 0; }
         
-        /* Flexbox layout for Date and Search Controls */
         .controls-section { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; gap: 20px; }
         .date-section input { padding: 8px; font-size: 1em; border: 1px solid #ccc; border-radius: 4px; }
-        
         .search-section { flex-grow: 1; max-width: 400px; }
-        .search-input { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #3498db; border-radius: 4px; box-sizing: border-box; }
-        .search-input:focus { outline: none; box-shadow: 0 0 5px rgba(52, 152, 219, 0.5); }
+        .search-input { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #2980b9; border-radius: 4px; box-sizing: border-box; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #bdc3c7; padding: 8px 12px; text-align: left; }
-        th { background-color: #ecf0f1; color: #2c3e50; }
-        input[type="number"] { width: 100%; border: 1px solid #ccc; padding: 6px; box-sizing: border-box; border-radius: 4px; }
-        input[type="number"]:focus { background-color: #fffde7; border-color: #f1c40f; }
+        th, td { border: 1px solid #7f8c8d; padding: 6px 10px; text-align: left; font-size: 0.95em; }
         
-        .total-row { font-weight: bold; background-color: #eaeded; }
-        .btn-submit { display: block; width: 100%; padding: 12px; margin-top: 20px; background-color: #27ae60; color: white; border: none; font-size: 1.1em; border-radius: 5px; cursor: pointer; }
-        .alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; }
-        .alert-success { background-color: #d4edda; color: #155724; }
+        /* Shift header styles matching paper matrix layout */
+        .header-main { text-align: center; font-weight: bold; text-transform: uppercase; background-color: #d5dbdb; }
+        .header-sub { background-color: #eaeded; color: #2c3e50; font-size: 0.85em; text-transform: uppercase; }
+        
+        input[type="number"] { width: 100%; border: 1px solid #ccd1d1; padding: 4px; box-sizing: border-box; border-radius: 3px; font-size: 0.95em; }
+        input[type="number"]:focus { background-color: #fffde7; border-color: #f1c40f; outline: none; }
+        
+        .total-row { font-weight: bold; background-color: #d5dbdb; }
+        .btn-submit { display: block; width: 100%; padding: 14px; margin-top: 25px; background-color: #27ae60; color: white; border: none; font-size: 1.1em; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; background-color: #d4edda; color: #155724; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <a href="/products" class="nav-link">Go to Product Manager →</a>
-    <h2>Poultry Daily Log Sheet</h2>
+    <h2>Poultry Shift Production Sheet</h2>
     <hr>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% with messages = get_flashed_messages() %}
       {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% for message in messages %}
+          <div class="alert">{{ message }}</div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
     <form method="POST" action="/">
         
-        <!-- Controls Section: Date Picker + Real-time Search Filter -->
         <div class="controls-section">
             <div class="date-section">
-                <label for="date"><strong>Log Date:</strong></label>
+                <label for="date"><strong>DATE:</strong></label>
                 <input type="date" id="date" name="date" value="{{ current_date }}" required>
             </div>
-            
             <div class="search-section">
-                <input type="text" id="search-box" class="search-input" placeholder="🔍 Search by ID or Product Name...">
+                <input type="text" id="search-box" class="search-input" placeholder="🔍 Quick search product code or description...">
             </div>
         </div>
 
         <table>
             <thead>
+                <!-- Top Row Headers defining the shifts -->
                 <tr>
-                    <th style="width: 50%;">Product (ID & Description)</th>
-                    <th style="width: 25%;">Birds</th>
-                    <th style="width: 25%;">Weight</th>
+                    <th rowspan="2" style="width: 40%; vertical-align: middle;">Product Description</th>
+                    <th colspan="2" class="header-main" style="width: 30%;">Day Shift</th>
+                    <th colspan="2" class="header-main" style="width: 30%;">Night Shift</th>
+                </tr>
+                <!-- Bottom Sub Headers matching the paper columns -->
+                <tr>
+                    <th class="header-sub">Birds</th>
+                    <th class="header-sub">Weight</th>
+                    <th class="header-sub">Birds</th>
+                    <th class="header-sub">Weight</th>
                 </tr>
             </thead>
             <tbody id="product-rows">
                 {% for product in products %}
                 <tr class="product-row">
                     <td class="product-text"><strong>{{ product.code }}</strong> - {{ product.name }}</td>
-                    <td>
-                        <input type="number" name="birds_{{ product.id }}" class="birds-input" min="0" placeholder="0">
-                    </td>
-                    <td>
-                        <input type="number" name="weight_{{ product.id }}" class="weight-input" min="0" step="0.01" placeholder="0.0">
-                    </td>
+                    
+                    <!-- Day Shift Columns -->
+                    <td><input type="number" name="day_birds_{{ product.id }}" class="input-day-birds" min="0" placeholder="-"></td>
+                    <td><input type="number" name="day_weight_{{ product.id }}" class="input-day-weight" min="0" step="0.01" placeholder="-"></td>
+                    
+                    <!-- Night Shift Columns -->
+                    <td><input type="number" name="night_birds_{{ product.id }}" class="input-night-birds" min="0" placeholder="-"></td>
+                    <td><input type="number" name="night_weight_{{ product.id }}" class="input-night-weight" min="0" step="0.01" placeholder="-"></td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="3" style="text-align: center; color: #7f8c8d;">No products added yet. Go to the Product Manager to add items.</td>
+                    <td colspan="5" style="text-align: center; color: #7f8c8d;">No products in database yet.</td>
                 </tr>
                 {% endfor %}
                 
-                <!-- Totals Row (Always remains visible) -->
+                <!-- Double Shift Summary Totals Matrix -->
                 <tr class="total-row">
-                    <td>Total (All Entries)</td>
-                    <td id="total-birds">0</td>
-                    <td id="total-weight">0.0</td>
+                    <td>Total</td>
+                    <td id="total-day-birds">0</td>
+                    <td id="total-day-weight">0.0</td>
+                    <td id="total-night-birds">0</td>
+                    <td id="total-night-weight">0.0</td>
                 </tr>
             </tbody>
         </table>
@@ -99,45 +109,41 @@
 </div>
 
 <script>
+    // 1. Search filter supporting text queries while keeping rows with active numbers visible
     const searchBox = document.getElementById('search-box');
     const productRows = document.querySelectorAll('.product-row');
-    const table = document.getElementById('product-rows');
 
-    // 1. REAL-TIME SEARCH FILTER
     searchBox.addEventListener('keyup', function() {
-        const query = searchBox.value.toLowerCase().strip();
-        
+        const query = searchBox.value.toLowerCase().trim();
         productRows.forEach(row => {
-            const textContent = row.querySelector('.product-text').textContent.toLowerCase();
+            const text = row.querySelector('.product-text').textContent.toLowerCase();
             
-            // If the row matches the search or contains an active input value, keep it visible
-            const birdsInput = row.querySelector('.birds-input').value;
-            const weightInput = row.querySelector('.weight-input').value;
-            const hasData = birdsInput || weightInput;
+            const hasData = row.querySelector('.input-day-birds').value || 
+                            row.querySelector('.input-day-weight').value ||
+                            row.querySelector('.input-night-birds').value || 
+                            row.querySelector('.input-night-weight').value;
 
-            if (textContent.includes(query) || hasData) {
-                row.style.display = ""; // Show
+            if (text.includes(query) || hasData) {
+                row.style.display = "";
             } else {
-                row.style.display = "none"; // Hide
+                row.style.display = "none";
             }
         });
     });
 
-    // Helper to strip whitespace
-    if (!String.prototype.strip) {
-        String.prototype.strip = function () { return this.replace(/^\s+|\s+$/g, ''); };
-    }
+    // 2. Real-time Calculations for all 4 dynamic summary blocks
+    document.getElementById('product-rows').addEventListener('input', () => {
+        let dayBirds = 0, dayWeight = 0, nightBirds = 0, nightWeight = 0;
 
-    // 2. MATHEMATICAL RUNNING TOTALS
-    table.addEventListener('input', () => {
-        let totalBirds = 0;
-        let totalWeight = 0;
+        document.querySelectorAll('.input-day-birds').forEach(i => { if(i.value) dayBirds += parseInt(i.value); });
+        document.querySelectorAll('.input-day-weight').forEach(i => { if(i.value) dayWeight += parseFloat(i.value); });
+        document.querySelectorAll('.input-night-birds').forEach(i => { if(i.value) nightBirds += parseInt(i.value); });
+        document.querySelectorAll('.input-night-weight').forEach(i => { if(i.value) nightWeight += parseFloat(i.value); });
 
-        document.querySelectorAll('.birds-input').forEach(i => { if(i.value) totalBirds += parseInt(i.value); });
-        document.querySelectorAll('.weight-input').forEach(i => { if(i.value) totalWeight += parseFloat(i.value); });
-
-        document.getElementById('total-birds').innerText = totalBirds;
-        document.getElementById('total-weight').innerText = totalWeight.toFixed(1);
+        document.getElementById('total-day-birds').innerText = dayBirds;
+        document.getElementById('total-day-weight').innerText = dayWeight.toFixed(1);
+        document.getElementById('total-night-birds').innerText = nightBirds;
+        document.getElementById('total-night-weight').innerText = nightWeight.toFixed(1);
     });
 </script>
 
