@@ -145,5 +145,44 @@ def products_manager():
     all_products = Product.query.order_by(Product.code).all()
     return render_template('products.html', products=all_products)
 
+# 3. EDIT PRODUCT ROUTE
+@app.route('/products/edit/<int:id>', methods=['POST'])
+def edit_product(id):
+    product = Product.query.get_or_4004(id) if hasattr(Product.query, 'get_or_4004') else Product.query.get(id)
+    if not product:
+        flash("Product not found.", "danger")
+        return redirect(url_for('products_manager'))
+        
+    code = request.form.get('code').strip()
+    name = request.form.get('name').strip()
+    
+    if code and name:
+        # Check if the code is taken by another product
+        existing = Product.query.filter(Product.code == code, Product.id != id).first()
+        if existing:
+            flash(f"Product code {code} is already in use by another product!", "danger")
+        else:
+            product.code = code
+            product.name = name
+            db.session.commit()
+            flash("Product updated successfully!", "success")
+    return redirect(url_for('products_manager'))
+
+
+# 4. DELETE PRODUCT ROUTE
+@app.route('/products/delete/<int:id>', methods=['POST'])
+def delete_product(id):
+    product = Product.query.get(id)
+    if product:
+        # Delete related shift logs first to prevent database crashes (foreign key constraint)
+        EntryLog.query.filter_by(product_id=id).delete()
+        
+        db.session.delete(product)
+        db.session.commit()
+        flash(f"Product '{product.code}' and its log history deleted successfully.", "success")
+    else:
+        flash("Product not found.", "danger")
+    return redirect(url_for('products_manager'))
+
 if __name__ == '__main__':
     app.run(debug=True)

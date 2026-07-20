@@ -5,19 +5,36 @@
     <title>Product Manager</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f6f7; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .nav-link { float: right; background: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; }
         h2 { color: #2c3e50; margin-top: 0; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        .btn-add { background-color: #2980b9; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; }
-        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
-        th, td { border: 1px solid #bdc3c7; padding: 10px; text-align: left; }
+        .btn-add { background-color: #2980b9; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold;}
+        
+        /* Search Bar Styles */
+        .search-section { margin: 25px 0 15px 0; }
+        .search-input { width: 100%; padding: 12px; font-size: 1em; border: 1px solid #7f8c8d; border-radius: 4px; box-sizing: border-box; }
+        .search-input:focus { outline: none; border-color: #2980b9; box-shadow: 0 0 5px rgba(41, 128, 185, 0.3); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #bdc3c7; padding: 10px; text-align: left; vertical-align: middle; }
         th { background-color: #ecf0f1; }
+        
+        /* Action Buttons */
+        .btn-edit { background-color: #2980b9; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.9em; }
+        .btn-delete { background-color: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .btn-save { background-color: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .btn-cancel { background-color: #95a5a6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .action-forms { display: inline-block; margin: 0; }
+        
         .alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; }
         .alert-success { background-color: #d4edda; color: #155724; }
         .alert-danger { background-color: #f8d7da; color: #721c24; }
+        
+        /* Inline Edit Elements */
+        .edit-input { padding: 5px; width: 90%; box-sizing: border-box; border: 1px solid #f39c12; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -48,28 +65,98 @@
         <button type="submit" class="btn-add">Add Product to System</button>
     </form>
 
-    <h3>Active Master Product List</h3>
+    <div class="search-section">
+        <h3>Active Master Product List</h3>
+        <input type="text" id="search-box" class="search-input" placeholder="🔍 Filter products by ID or Name...">
+    </div>
+
     <table>
         <thead>
             <tr>
-                <th style="width: 30%;">Product ID</th>
-                <th style="width: 70%;">Product Name</th>
+                <th style="width: 25%;">Product ID</th>
+                <th style="width: 50%;">Product Name</th>
+                <th style="width: 25%; text-align: center;">Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="product-table-body">
             {% for product in products %}
-            <tr>
-                <td><strong>{{ product.code }}</strong></td>
-                <td>{{ product.name }}</td>
+            <!-- Standard Static Row Data View -->
+            <tr class="product-row" id="row-view-{{ product.id }}">
+                <td class="product-code"><strong>{{ product.code }}</strong></td>
+                <td class="product-name">{{ product.name }}</td>
+                <td style="text-align: center;">
+                    <button class="btn-edit" onclick="toggleEdit('{{ product.id }}')">Edit</button>
+                    <form action="/products/delete/{{ product.id }}" method="POST" class="action-forms" onsubmit="return confirm('Are you sure you want to delete product {{ product.code }}? This will clear all historical logs linked to it.');">
+                        <button type="submit" class="btn-delete">Delete</button>
+                    </form>
+                </td>
+            </tr>
+
+            <!-- Hidden Inline Dynamic Editing Form Row State -->
+            <tr class="product-row" id="row-edit-{{ product.id }}" style="display: none; background-color: #fef9e7;">
+                <form action="/products/edit/{{ product.id }}" method="POST">
+                    <td>
+                        <input type="text" name="code" value="{{ product.code }}" class="edit-input" required>
+                    </td>
+                    <td>
+                        <input type="text" name="name" value="{{ product.name }}" class="edit-input" required>
+                    </td>
+                    <td style="text-align: center;">
+                        <button type="submit" class="btn-save">Save</button>
+                        <button type="button" class="btn-cancel" onclick="toggleEdit('{{ product.id }}')">Cancel</button>
+                    </td>
+                </form>
             </tr>
             {% else %}
             <tr>
-                <td colspan="2" style="text-align: center; color: #7f8c8d;">No products in database yet. Add your first item above!</td>
+                <td colspan="3" style="text-align: center; color: #7f8c8d;">No products in database yet. Add your first item above!</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<script>
+    // 1. DYNAMIC SEARCH FILTER
+    const searchBox = document.getElementById('search-box');
+    const tableBody = document.getElementById('product-table-body');
+
+    searchBox.addEventListener('keyup', function() {
+        const query = searchBox.value.toLowerCase().trim();
+        const rows = tableBody.querySelectorAll('.product-row');
+
+        rows.forEach(row => {
+            // Only evaluate text against standard views (skip open inline editors while filtering)
+            if (row.id.startsWith('row-view-')) {
+                const codeText = row.querySelector('.product-code').textContent.toLowerCase();
+                const nameText = row.querySelector('.product-name').textContent.toLowerCase();
+                const idNum = row.id.replace('row-view-', '');
+                const targetEditRow = document.getElementById('row-edit-' + idNum);
+
+                if (codeText.includes(query) || nameText.includes(query)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                    if (targetEditRow) targetEditRow.style.display = "none"; // Hide edit state too if hidden
+                }
+            }
+        });
+    });
+
+    // 2. INLINE ROW EDIT TOGGLE
+    function toggleEdit(id) {
+        const viewRow = document.getElementById('row-view-' + id);
+        const editRow = document.getElementById('row-edit-' + id);
+
+        if (viewRow.style.display === "none") {
+            viewRow.style.display = "";
+            editRow.style.display = "none";
+        } else {
+            viewRow.style.display = "none";
+            editRow.style.display = "";
+        }
+    }
+</script>
 
 </body>
 </html>
