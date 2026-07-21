@@ -38,21 +38,29 @@
         .header-main { text-align: center; font-weight: bold; text-transform: uppercase; background-color: #d5dbdb !important; }
         .header-sub { background-color: #eaeded !important; color: #2c3e50; font-size: 0.85em; text-transform: uppercase; }
         
-        /* Cell Layout with Tally Button */
+       /* Cell Layout with Tally Button */
         .cell-container { display: flex; align-items: center; gap: 4px; }
         .cell-container input[type="number"] { flex: 1; }
         .btn-tally { 
-            background: #e67e22; 
-            color: white; 
-            border: none; 
+            background: #ffffff; 
+            color: #2c3e50; 
+            border: 1px solid #bdc3c7; 
             padding: 4px 6px; 
             border-radius: 3px; 
             cursor: pointer; 
             font-size: 0.8em; 
             font-weight: bold;
+            transition: background-color 0.2s, border-color 0.2s;
         }
-        .btn-tally:hover { background: #d35400; }
-        .btn-tally.has-batches { background: #27ae60; }
+        .btn-tally:hover { 
+            background: #f2f4f4; 
+            border-color: #7f8c8d; 
+        }
+        .btn-tally.has-batches { 
+            background: #27ae60; 
+            color: white; 
+            border: 1px solid #27ae60; 
+        }
 
         input[type="number"] { width: 100%; border: 1px solid #ccd1d1; padding: 4px; box-sizing: border-box; border-radius: 3px; font-size: 0.95em; transition: background-color 0.2s, border-color 0.2s; }
         input[type="number"]:focus { background-color: #e8f8f5; border: 1px solid #1abc9c; outline: none; }
@@ -149,7 +157,7 @@
                     <td>
                         <div class="cell-container">
                             <input type="number" name="day_birds_{{ product.id }}" class="nav-cell input-day-birds" min="0" placeholder="-" value="{{ item.day_birds if item.day_birds is number and item.day_birds != 0 else '' }}">
-                            <button type="button" class="btn-tally {{ 'has-batches' if item.day_batches else '' }}" title="Batch Tally" onclick="openBatchModal({{ product.id }}, 'day', '{{ product.name }}')">🧮</button>
+                            <button type="button" class="btn-tally {{ 'has-batches' if item.day_batches else '' }}" title="Batch Tally" data-product-id="{{ product.id }}" data-shift="day" data-product-name="{{ product.name }}" onclick="openBatchModal(this)">⚙️</button>
                             <input type="hidden" name="day_batches_{{ product.id }}" class="input-day-batches" value="{{ item.day_batches or '' }}">
                         </div>
                     </td>
@@ -159,7 +167,7 @@
                     <td>
                         <div class="cell-container">
                             <input type="number" name="night_birds_{{ product.id }}" class="nav-cell input-night-birds" min="0" placeholder="-" value="{{ item.night_birds if item.night_birds is number and item.night_birds != 0 else '' }}">
-                            <button type="button" class="btn-tally {{ 'has-batches' if item.night_batches else '' }}" title="Batch Tally" onclick="openBatchModal({{ product.id }}, 'night', '{{ product.name }}')">🧮</button>
+                            <button type="button" class="btn-tally {{ 'has-batches' if item.night_batches else '' }}" title="Batch Tally" data-product-id="{{ product.id }}" data-shift="night" data-product-name="{{ product.name }}" onclick="openBatchModal(this)">⚙️</button>
                             <input type="hidden" name="night_batches_{{ product.id }}" class="input-night-batches" value="{{ item.night_batches or '' }}">
                         </div>
                     </td>
@@ -234,15 +242,16 @@
     }
 
     // --- BATCH MODAL FUNCTIONS ---
-    function openBatchModal(productId, shift, productName) {
-        activeProductId = productId;
-        activeShift = shift;
+    function openBatchModal(btn) {
+        activeProductId = btn.getAttribute('data-product-id');
+        activeShift = btn.getAttribute('data-shift');
+        const productName = btn.getAttribute('data-product-name');
         
-        document.getElementById('modal-title').innerText = `${productName} (${shift.toUpperCase()})`;
+        document.getElementById('modal-title').innerText = `${productName} (${activeShift.toUpperCase()})`;
         const batchTable = document.getElementById('batch-rows');
         batchTable.innerHTML = "";
 
-        const hiddenInput = document.querySelector(`tr[data-product-id="${productId}"] .input-${shift}-batches`);
+        const hiddenInput = document.querySelector(`tr[data-product-id="${activeProductId}"] .input-${activeShift}-batches`);
         let existingBatches = [];
 
         if (hiddenInput && hiddenInput.value) {
