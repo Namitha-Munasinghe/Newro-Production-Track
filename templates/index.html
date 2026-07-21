@@ -14,10 +14,8 @@
         .search-section { flex-grow: 1; max-width: 400px; }
         .search-input { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #2980b9; border-radius: 4px; box-sizing: border-box; }
 
-        /* Modified table properties to support sticky headers without overlapping borders */
         table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; }
         
-        /* Sticky Column Header Configuration */
         th { 
             position: sticky; 
             z-index: 10;
@@ -40,70 +38,60 @@
         .header-main { text-align: center; font-weight: bold; text-transform: uppercase; background-color: #d5dbdb !important; }
         .header-sub { background-color: #eaeded !important; color: #2c3e50; font-size: 0.85em; text-transform: uppercase; }
         
+        /* Cell Layout with Tally Button */
+        .cell-container { display: flex; align-items: center; gap: 4px; }
+        .cell-container input[type="number"] { flex: 1; }
+        .btn-tally { 
+            background: #e67e22; 
+            color: white; 
+            border: none; 
+            padding: 4px 6px; 
+            border-radius: 3px; 
+            cursor: pointer; 
+            font-size: 0.8em; 
+            font-weight: bold;
+        }
+        .btn-tally:hover { background: #d35400; }
+        .btn-tally.has-batches { background: #27ae60; }
+
         input[type="number"] { width: 100%; border: 1px solid #ccd1d1; padding: 4px; box-sizing: border-box; border-radius: 3px; font-size: 0.95em; transition: background-color 0.2s, border-color 0.2s; }
         input[type="number"]:focus { background-color: #e8f8f5; border: 1px solid #1abc9c; outline: none; }
         
-        /* CLASS FOR HIGHLIGHTING INCOMPLETE PAIRS */
         input.input-incomplete {
-            background-color: #fadbd8 !important; /* Light Red */
+            background-color: #fadbd8 !important;
             border: 1px solid #e74c3c !important;
         }
 
         .total-row { font-weight: bold; background-color: #d5dbdb; }
         .total-row td { position: sticky; bottom: 0; background-color: #d5dbdb !important; z-index: 5; box-shadow: inset 0 1px 0 #7f8c8d, inset 0 -1px 0 #7f8c8d; }
 
-        /* BUTTON GROUP & STYLING */
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 25px;
-        }
-        .btn-submit { 
-            flex: 2; 
-            padding: 14px; 
-            background-color: #27ae60; 
-            color: white; 
-            border: none; 
-            font-size: 1.1em; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            text-align: center;
-        }
+        .button-group { display: flex; gap: 15px; margin-top: 25px; }
+        .btn-submit { flex: 2; padding: 14px; background-color: #27ae60; color: white; border: none; font-size: 1.1em; border-radius: 5px; cursor: pointer; font-weight: bold; text-align: center; }
         .btn-submit:hover { background-color: #219653; }
 
-        .btn-summary { 
-            flex: 2; 
-            padding: 14px; 
-            background-color: #8e44ad; 
-            color: white; 
-            border: none; 
-            font-size: 1.1em; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            text-decoration: none; 
-            text-align: center;
-            box-sizing: border-box;
-            display: inline-block;
-        }
+        .btn-summary { flex: 2; padding: 14px; background-color: #8e44ad; color: white; border: none; font-size: 1.1em; border-radius: 5px; cursor: pointer; font-weight: bold; text-decoration: none; text-align: center; box-sizing: border-box; display: inline-block; }
         .btn-summary:hover { background-color: #732d91; }
 
-        .btn-delete {
-            flex: 1;
-            padding: 14px;
-            background-color: #c0392b;
-            color: white;
-            border: none;
-            font-size: 1.1em;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            text-align: center;
-        }
+        .btn-delete { flex: 1; padding: 14px; background-color: #c0392b; color: white; border: none; font-size: 1.1em; border-radius: 5px; cursor: pointer; font-weight: bold; text-align: center; }
         .btn-delete:hover { background-color: #a93226; }
 
         .alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; background-color: #d4edda; color: #155724; }
+
+        /* MODAL POPUP STYLES */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+        .modal-card { background: white; border-radius: 8px; width: 450px; max-width: 90%; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-height: 85vh; display: flex; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-header h3 { margin: 0; color: #2c3e50; }
+        .modal-body { overflow-y: auto; padding: 15px 0; flex-grow: 1; }
+        .batch-table { width: 100%; border-collapse: collapse; }
+        .batch-table th, .batch-table td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+        .batch-table input { width: 100%; border: 1px solid #ccc; padding: 4px; text-align: center; font-size: 1em; box-sizing: border-box; }
+        .btn-remove-row { background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-weight: bold; }
+        .modal-footer { border-top: 1px solid #eee; padding-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-add-batch { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-apply { background: #27ae60; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-cancel { background: #7f8c8d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .batch-sum-bar { background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px; font-weight: bold; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
@@ -121,7 +109,6 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Date selector reloads data for the selected date -->
     <div class="controls-section">
         <div class="date-section">
             <form id="date-form" method="GET" action="/">
@@ -155,15 +142,27 @@
             <tbody id="product-rows">
                 {% for product in products %}
                 {% set item = existing_logs.get(product.id, {}) if existing_logs else {} %}
-                <tr class="product-row">
+                <tr class="product-row" data-product-id="{{ product.id }}">
                     <td class="product-text"><strong>{{ product.code }}</strong> - {{ product.name }}</td>
                     
                     <!-- Day Shift Columns -->
-                    <td><input type="number" name="day_birds_{{ product.id }}" class="nav-cell input-day-birds" min="0" placeholder="-" value="{{ item.day_birds if item.day_birds is number and item.day_birds != 0 else '' }}"></td>
+                    <td>
+                        <div class="cell-container">
+                            <input type="number" name="day_birds_{{ product.id }}" class="nav-cell input-day-birds" min="0" placeholder="-" value="{{ item.day_birds if item.day_birds is number and item.day_birds != 0 else '' }}">
+                            <button type="button" class="btn-tally {{ 'has-batches' if item.day_batches else '' }}" title="Batch Tally" onclick="openBatchModal({{ product.id }}, 'day', '{{ product.name }}')">🧮</button>
+                            <input type="hidden" name="day_batches_{{ product.id }}" class="input-day-batches" value="{{ item.day_batches or '' }}">
+                        </div>
+                    </td>
                     <td><input type="number" name="day_weight_{{ product.id }}" class="nav-cell input-day-weight" min="0" step="0.01" placeholder="-" value="{{ '%.2f'|format(item.day_weight) if item.day_weight is number and item.day_weight != 0 else '' }}"></td>
                     
                     <!-- Night Shift Columns -->
-                    <td><input type="number" name="night_birds_{{ product.id }}" class="nav-cell input-night-birds" min="0" placeholder="-" value="{{ item.night_birds if item.night_birds is number and item.night_birds != 0 else '' }}"></td>
+                    <td>
+                        <div class="cell-container">
+                            <input type="number" name="night_birds_{{ product.id }}" class="nav-cell input-night-birds" min="0" placeholder="-" value="{{ item.night_birds if item.night_birds is number and item.night_birds != 0 else '' }}">
+                            <button type="button" class="btn-tally {{ 'has-batches' if item.night_batches else '' }}" title="Batch Tally" onclick="openBatchModal({{ product.id }}, 'night', '{{ product.name }}')">🧮</button>
+                            <input type="hidden" name="night_batches_{{ product.id }}" class="input-night-batches" value="{{ item.night_batches or '' }}">
+                        </div>
+                    </td>
                     <td><input type="number" name="night_weight_{{ product.id }}" class="nav-cell input-night-weight" min="0" step="0.01" placeholder="-" value="{{ '%.2f'|format(item.night_weight) if item.night_weight is number and item.night_weight != 0 else '' }}"></td>
                 </tr>
                 {% else %}
@@ -183,7 +182,6 @@
         </table>
 
         {% if products %}
-        <!-- ACTION BUTTONS GROUP -->
         <div class="button-group">
             <button type="submit" name="action" value="save" class="btn-submit">💾 Save Quantities</button>
             <a href="/summary?date={{ current_date }}" id="calculate-summary-btn" class="btn-summary">📊 Summary</a>
@@ -193,13 +191,177 @@
     </form>
 </div>
 
+<!-- BATCH ENTRY MODAL -->
+<div id="batch-modal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="modal-title">Batch Entry</h3>
+            <button type="button" onclick="closeBatchModal()" style="border:none; background:none; font-size:1.2em; cursor:pointer;">✖</button>
+        </div>
+        <div class="modal-body">
+            <table class="batch-table">
+                <thead>
+                    <tr>
+                        <th>Birds</th>
+                        <th>Weight (kg)</th>
+                        <th style="width: 40px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="batch-rows">
+                    <!-- Dynamic Batch Rows Inserted Here -->
+                </tbody>
+            </table>
+            <button type="button" class="btn-add-batch" onclick="addBatchRow()" style="margin-top: 10px;">➕ Add Line</button>
+            
+            <div class="batch-sum-bar">
+                <span>Total Birds: <span id="modal-tot-birds" style="color:#2980b9;">0</span></span>
+                <span>Total Weight: <span id="modal-tot-weight" style="color:#27ae60;">0.00</span></span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeBatchModal()">Cancel</button>
+            <button type="button" class="btn-apply" onclick="applyBatchTally()">Apply Tally</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // 1. DELETE CONFIRMATION PROMPT
+    let activeProductId = null;
+    let activeShift = null;
+
     function confirmDelete(dateStr) {
         return confirm(`Are you sure you want to CLEAR/DELETE all log entries for ${dateStr}? This action cannot be undone.`);
     }
 
-    // 2. SEARCH FILTER
+    // --- BATCH MODAL FUNCTIONS ---
+    function openBatchModal(productId, shift, productName) {
+        activeProductId = productId;
+        activeShift = shift;
+        
+        document.getElementById('modal-title').innerText = `${productName} (${shift.toUpperCase()})`;
+        const batchTable = document.getElementById('batch-rows');
+        batchTable.innerHTML = "";
+
+        const hiddenInput = document.querySelector(`tr[data-product-id="${productId}"] .input-${shift}-batches`);
+        let existingBatches = [];
+
+        if (hiddenInput && hiddenInput.value) {
+            try { existingBatches = JSON.parse(hiddenInput.value); } catch(e) {}
+        }
+
+        if (existingBatches.length > 0) {
+            existingBatches.forEach(b => addBatchRow(b.birds, b.weight));
+        } else {
+            // Default with 3 empty rows for fast typing
+            addBatchRow(); addBatchRow(); addBatchRow();
+        }
+
+        document.getElementById('batch-modal').style.display = 'flex';
+        recalcModalSums();
+
+        // Auto focus on the first input box
+        setTimeout(() => {
+            const firstBox = batchTable.querySelector('input');
+            if(firstBox) firstBox.focus();
+        }, 100);
+    }
+
+    function closeBatchModal() {
+        document.getElementById('batch-modal').style.display = 'none';
+    }
+
+    function addBatchRow(birds = '', weight = '') {
+        const tbody = document.getElementById('batch-rows');
+        const tr = document.createElement('tr');
+        tr.className = 'batch-row-item';
+        tr.innerHTML = `
+            <td><input type="number" class="b-birds" min="0" value="${birds}" placeholder="e.g. 50"></td>
+            <td><input type="number" class="b-weight" min="0" step="0.01" value="${weight}" placeholder="e.g. 50.7"></td>
+            <td><button type="button" class="btn-remove-row" onclick="removeBatchRow(this)">✕</button></td>
+        `;
+        tbody.appendChild(tr);
+
+        // Bind input calculation & keyboard navigation
+        const bInput = tr.querySelector('.b-birds');
+        const wInput = tr.querySelector('.b-weight');
+
+        bInput.addEventListener('input', recalcModalSums);
+        wInput.addEventListener('input', recalcModalSums);
+
+        // Enter key navigation inside batch table
+        wInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const nextTr = tr.nextElementSibling;
+                if (nextTr) {
+                    nextTr.querySelector('.b-birds').focus();
+                } else {
+                    addBatchRow();
+                    tr.nextElementSibling.querySelector('.b-birds').focus();
+                }
+            }
+        });
+
+        bInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                wInput.focus();
+            }
+        });
+    }
+
+    function removeBatchRow(btn) {
+        btn.closest('tr').remove();
+        recalcModalSums();
+    }
+
+    function recalcModalSums() {
+        let totB = 0, totW = 0;
+        document.querySelectorAll('.batch-row-item').forEach(tr => {
+            const b = tr.querySelector('.b-birds').value;
+            const w = tr.querySelector('.b-weight').value;
+            if (b) totB += parseInt(b);
+            if (w) totW += parseFloat(w);
+        });
+        document.getElementById('modal-tot-birds').innerText = totB;
+        document.getElementById('modal-tot-weight').innerText = totW.toFixed(2);
+    }
+
+    function applyBatchTally() {
+        let totB = 0, totW = 0;
+        let batchArray = [];
+
+        document.querySelectorAll('.batch-row-item').forEach(tr => {
+            const b = tr.querySelector('.b-birds').value.trim();
+            const w = tr.querySelector('.b-weight').value.trim();
+            if (b || w) {
+                batchArray.push({ birds: b, weight: w });
+                if (b) totB += parseInt(b);
+                if (w) totW += parseFloat(w);
+            }
+        });
+
+        const targetRow = document.querySelector(`tr[data-product-id="${activeProductId}"]`);
+        const birdsInput = targetRow.querySelector(`.input-${activeShift}-birds`);
+        const weightInput = targetRow.querySelector(`.input-${activeShift}-weight`);
+        const batchesHidden = targetRow.querySelector(`.input-${activeShift}-batches`);
+        const tallyBtn = targetRow.querySelector(`.input-${activeShift}-birds`).parentElement.querySelector('.btn-tally');
+
+        birdsInput.value = totB > 0 ? totB : '';
+        weightInput.value = totW > 0 ? totW.toFixed(2) : '';
+        batchesHidden.value = batchArray.length > 0 ? JSON.stringify(batchArray) : '';
+
+        if (batchArray.length > 0) {
+            tallyBtn.classList.add('has-batches');
+        } else {
+            tallyBtn.classList.remove('has-batches');
+        }
+
+        closeBatchModal();
+        calculateTotalsAndValidate();
+    }
+
+    // --- MAIN SEARCH FILTER ---
     const searchBox = document.getElementById('search-box');
     const productRows = document.querySelectorAll('.product-row');
 
@@ -207,7 +369,6 @@
         const query = searchBox.value.toLowerCase().trim();
         productRows.forEach(row => {
             const text = row.querySelector('.product-text').textContent.toLowerCase();
-            
             const hasData = row.querySelector('.input-day-birds').value || 
                             row.querySelector('.input-day-weight').value ||
                             row.querySelector('.input-night-birds').value || 
@@ -221,7 +382,7 @@
         });
     });
 
-    // 3. REAL-TIME MATH CALCULATION & INCOMPLETE PAIR HIGHLIGHTING
+    // --- REAL-TIME MATH CALCULATION & INCOMPLETE PAIR HIGHLIGHTING ---
     function calculateTotalsAndValidate() {
         let dayBirds = 0, dayWeight = 0, nightBirds = 0, nightWeight = 0;
         let hasIncompletePairs = false;
@@ -275,9 +436,9 @@
     }
 
     document.getElementById('product-rows').addEventListener('input', calculateTotalsAndValidate);
-    calculateTotalsAndValidate(); // Run initially on load
+    calculateTotalsAndValidate();
 
-    // 4. ARROW KEYBOARD GRID NAVIGATION & ENTER KEY FIX
+    // --- GRID NAVIGATION WITH ARROW KEYS ---
     document.getElementById('product-rows').addEventListener('keydown', function(e) {
         const activeInput = document.activeElement;
         if (!activeInput || !activeInput.classList.contains('nav-cell')) return;
@@ -289,7 +450,7 @@
 
         if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
 
-        const currentTd = activeInput.parentElement;
+        const currentTd = activeInput.closest('td');
         const currentTr = currentTd.parentElement;
         const rowCells = Array.from(currentTr.querySelectorAll('.nav-cell'));
         const colIndex = rowCells.indexOf(activeInput);
@@ -321,12 +482,10 @@
         }
     });
 
-    // 5. SAVE CONFIRMATION DIALOG BOX & FORM VALIDATION
+    // --- SAVE CONFIRMATION DIALOG BOX & FORM VALIDATION ---
     document.getElementById('production-form').addEventListener('submit', function(e) {
-        // Skip check if delete button was clicked
         if (e.submitter && e.submitter.classList.contains('btn-delete')) return;
 
-        // Block submit if incomplete pairs exist
         const hasIncomplete = calculateTotalsAndValidate();
         if (hasIncomplete) {
             e.preventDefault();

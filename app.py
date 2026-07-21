@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import json
 
 app = Flask(__name__)
 app.secret_key = 'poultry_secret_key'
@@ -23,6 +24,7 @@ class EntryLog(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     birds = db.Column(db.Integer, nullable=True)
     weight = db.Column(db.Float, nullable=True)
+    raw_batches = db.Column(db.Text, nullable=True) # Stores JSON string of batch breakdown
     
     product = db.relationship('Product', backref=db.backref('logs', lazy=True))
 
@@ -111,22 +113,28 @@ def home():
         products = Product.query.all()
         
         for product in products:
+            # Process Day Shift
             day_birds = request.form.get(f'day_birds_{product.id}')
             day_weight = request.form.get(f'day_weight_{product.id}')
+            day_batches = request.form.get(f'day_batches_{product.id}')
             if day_birds or day_weight:
                 db.session.add(EntryLog(
                     date=entry_date, shift='day', product_id=product.id,
                     birds=int(day_birds) if day_birds else None,
-                    weight=float(day_weight) if day_weight else None
+                    weight=float(day_weight) if day_weight else None,
+                    raw_batches=day_batches if day_batches else None
                 ))
 
+            # Process Night Shift
             night_birds = request.form.get(f'night_birds_{product.id}')
             night_weight = request.form.get(f'night_weight_{product.id}')
+            night_batches = request.form.get(f'night_batches_{product.id}')
             if night_birds or night_weight:
                 db.session.add(EntryLog(
                     date=entry_date, shift='night', product_id=product.id,
                     birds=int(night_birds) if night_birds else None,
-                    weight=float(night_weight) if night_weight else None
+                    weight=float(night_weight) if night_weight else None,
+                    raw_batches=night_batches if night_batches else None
                 ))
                 
         db.session.commit()
@@ -143,9 +151,11 @@ def home():
         if log.shift == 'day':
             existing_logs[log.product_id]['day_birds'] = log.birds
             existing_logs[log.product_id]['day_weight'] = log.weight
+            existing_logs[log.product_id]['day_batches'] = log.raw_batches or ""
         elif log.shift == 'night':
             existing_logs[log.product_id]['night_birds'] = log.birds
             existing_logs[log.product_id]['night_weight'] = log.weight
+            existing_logs[log.product_id]['night_batches'] = log.raw_batches or ""
 
     return render_template('index.html', products=products, current_date=selected_date_str, existing_logs=existing_logs)
 
