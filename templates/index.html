@@ -14,51 +14,96 @@
         .search-section { flex-grow: 1; max-width: 400px; }
         .search-input { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #2980b9; border-radius: 4px; box-sizing: border-box; }
 
-        /* Modified table properties to support beautiful sticky headers without overlapping borders */
+        /* Modified table properties to support sticky headers without overlapping borders */
         table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; }
         
         /* Sticky Column Header Configuration */
         th { 
             position: sticky; 
-            z-index: 10; /* High priority keeps headers firmly on top of data */
-            box-shadow: inset 0 -1px 0 #7f8c8d; /* Guarantees a continuous border structure while moving */
+            z-index: 10;
+            box-shadow: inset 0 -1px 0 #7f8c8d;
         }
         
-        /* Locked positions for multi-level stacked headers */
         thead tr:nth-child(1) th { top: 0; }
-        thead tr:nth-child(2) th { top: 35px; } /* Fits the depth of the first header row */
+        thead tr:nth-child(2) th { top: 35px; }
 
-        /* Border structural layout tailored for separate border states */
         th, td { border-right: 1px solid #7f8c8d; border-bottom: 1px solid #7f8c8d; padding: 6px 10px; text-align: left; font-size: 0.95em; }
         table tr th:first-child, table tr td:first-child { border-left: 1px solid #7f8c8d; }
         table tr:first-child th { border-top: 1px solid #7f8c8d; }
         
-        /* 
-           CRITICAL FIX: Target individual table cells (td) directly.
-           Giving them an explicit white background and a low z-index layer 
-           forces them to clip behind the sticky th header elements.
-        */
         tbody td {
             background-color: #ffffff !important;
             position: relative;
             z-index: 1;
         }
 
-        /* Fixed colors with fallback safety checks */
         .header-main { text-align: center; font-weight: bold; text-transform: uppercase; background-color: #d5dbdb !important; }
         .header-sub { background-color: #eaeded !important; color: #2c3e50; font-size: 0.85em; text-transform: uppercase; }
         
-        input[type="number"] { width: 100%; border: 1px solid #ccd1d1; padding: 4px; box-sizing: border-box; border-radius: 3px; font-size: 0.95em; }
-        input[type="number"]:focus { background-color: #fffde7; border-color: #f1c40f; outline: none; }
+        input[type="number"] { width: 100%; border: 1px solid #ccd1d1; padding: 4px; box-sizing: border-box; border-radius: 3px; font-size: 0.95em; transition: background-color 0.2s, border-color 0.2s; }
+        input[type="number"]:focus { background-color: #e8f8f5; border: 1px solid #1abc9c; outline: none; }
         
+        /* CLASS FOR HIGHLIGHTING INCOMPLETE PAIRS */
+        input.input-incomplete {
+            background-color: #fadbd8 !important; /* Light Red */
+            border: 1px solid #e74c3c !important;
+        }
+
         .total-row { font-weight: bold; background-color: #d5dbdb; }
-        /* Locks the Total Row to the bottom of the table viewport while scrolling */
         .total-row td { position: sticky; bottom: 0; background-color: #d5dbdb !important; z-index: 5; box-shadow: inset 0 1px 0 #7f8c8d, inset 0 -1px 0 #7f8c8d; }
 
-        .btn-submit { display: block; width: 100%; padding: 14px; margin-top: 25px; background-color: #27ae60; color: white; border: none; font-size: 1.1em; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        /* BUTTON GROUP & STYLING */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        .btn-submit { 
+            flex: 2; 
+            padding: 14px; 
+            background-color: #27ae60; 
+            color: white; 
+            border: none; 
+            font-size: 1.1em; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            text-align: center;
+        }
+        .btn-submit:hover { background-color: #219653; }
+
+        .btn-summary { 
+            flex: 2; 
+            padding: 14px; 
+            background-color: #8e44ad; 
+            color: white; 
+            border: none; 
+            font-size: 1.1em; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            text-decoration: none; 
+            text-align: center;
+            box-sizing: border-box;
+            display: inline-block;
+        }
+        .btn-summary:hover { background-color: #732d91; }
+
+        .btn-delete {
+            flex: 1;
+            padding: 14px;
+            background-color: #c0392b;
+            color: white;
+            border: none;
+            font-size: 1.1em;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: center;
+        }
+        .btn-delete:hover { background-color: #a93226; }
+
         .alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; background-color: #d4edda; color: #155724; }
-        
-        input[type="number"]:focus { background-color: #e8f8f5; border: 1px solid #1abc9c; }
     </style>
 </head>
 <body>
@@ -76,18 +121,22 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Added an id and an onsubmit confirmation hook to the form element -->
-    <form id="production-form" method="POST" action="/">
-        
-        <div class="controls-section">
-            <div class="date-section">
+    <!-- Date selector reloads data for the selected date -->
+    <div class="controls-section">
+        <div class="date-section">
+            <form id="date-form" method="GET" action="/">
                 <label for="date"><strong>DATE:</strong></label>
-                <input type="date" id="date" name="date" value="{{ current_date }}" required>
-            </div>
-            <div class="search-section">
-                <input type="text" id="search-box" class="search-input" placeholder="🔍 Quick search product code or description...">
-            </div>
+                <input type="date" id="date" name="date" value="{{ current_date }}" onchange="this.form.submit()" required>
+            </form>
         </div>
+        <div class="search-section">
+            <input type="text" id="search-box" class="search-input" placeholder="🔍 Quick search product code or description...">
+        </div>
+    </div>
+
+    <!-- MAIN LOG SHEET FORM -->
+    <form id="production-form" method="POST" action="/">
+        <input type="hidden" name="date" value="{{ current_date }}">
 
         <table>
             <thead>
@@ -105,16 +154,17 @@
             </thead>
             <tbody id="product-rows">
                 {% for product in products %}
+                {% set item = existing_logs.get(product.id, {}) if existing_logs else {} %}
                 <tr class="product-row">
                     <td class="product-text"><strong>{{ product.code }}</strong> - {{ product.name }}</td>
                     
                     <!-- Day Shift Columns -->
-                    <td><input type="number" name="day_birds_{{ product.id }}" class="nav-cell input-day-birds" min="0" placeholder="-"></td>
-                    <td><input type="number" name="day_weight_{{ product.id }}" class="nav-cell input-day-weight" min="0" step="0.01" placeholder="-"></td>
+                    <td><input type="number" name="day_birds_{{ product.id }}" class="nav-cell input-day-birds" min="0" placeholder="-" value="{{ item.day_birds if item.day_birds is number and item.day_birds != 0 else '' }}"></td>
+                    <td><input type="number" name="day_weight_{{ product.id }}" class="nav-cell input-day-weight" min="0" step="0.01" placeholder="-" value="{{ '%.2f'|format(item.day_weight) if item.day_weight is number and item.day_weight != 0 else '' }}"></td>
                     
                     <!-- Night Shift Columns -->
-                    <td><input type="number" name="night_birds_{{ product.id }}" class="nav-cell input-night-birds" min="0" placeholder="-"></td>
-                    <td><input type="number" name="night_weight_{{ product.id }}" class="nav-cell input-night-weight" min="0" step="0.01" placeholder="-"></td>
+                    <td><input type="number" name="night_birds_{{ product.id }}" class="nav-cell input-night-birds" min="0" placeholder="-" value="{{ item.night_birds if item.night_birds is number and item.night_birds != 0 else '' }}"></td>
+                    <td><input type="number" name="night_weight_{{ product.id }}" class="nav-cell input-night-weight" min="0" step="0.01" placeholder="-" value="{{ '%.2f'|format(item.night_weight) if item.night_weight is number and item.night_weight != 0 else '' }}"></td>
                 </tr>
                 {% else %}
                 <tr>
@@ -125,21 +175,31 @@
                 <tr class="total-row">
                     <td>Total</td>
                     <td id="total-day-birds">0</td>
-                    <td id="total-day-weight">0.0</td>
+                    <td id="total-day-weight">0.00</td>
                     <td id="total-night-birds">0</td>
-                    <td id="total-night-weight">0.0</td>
+                    <td id="total-night-weight">0.00</td>
                 </tr>
             </tbody>
         </table>
 
         {% if products %}
-        <button type="submit" class="btn-submit">Save Quantities</button>
+        <!-- ACTION BUTTONS GROUP -->
+        <div class="button-group">
+            <button type="submit" name="action" value="save" class="btn-submit">💾 Save Quantities</button>
+            <a href="/summary?date={{ current_date }}" id="calculate-summary-btn" class="btn-summary">📊 Summary</a>
+            <button type="submit" name="action" value="delete" formaction="/log/delete" class="btn-delete" onclick="return confirmDelete('{{ current_date }}')">🗑️ Delete Logs</button>
+        </div>
         {% endif %}
     </form>
 </div>
 
 <script>
-    // 1. SEARCH FILTER
+    // 1. DELETE CONFIRMATION PROMPT
+    function confirmDelete(dateStr) {
+        return confirm(`Are you sure you want to CLEAR/DELETE all log entries for ${dateStr}? This action cannot be undone.`);
+    }
+
+    // 2. SEARCH FILTER
     const searchBox = document.getElementById('search-box');
     const productRows = document.querySelectorAll('.product-row');
 
@@ -161,30 +221,67 @@
         });
     });
 
-// 2. REAL-TIME MATH CALCULATION (FORCED TO 2 DECIMAL PLACES FOR WEIGHT ONLY)
-    document.getElementById('product-rows').addEventListener('input', () => {
+    // 3. REAL-TIME MATH CALCULATION & INCOMPLETE PAIR HIGHLIGHTING
+    function calculateTotalsAndValidate() {
         let dayBirds = 0, dayWeight = 0, nightBirds = 0, nightWeight = 0;
+        let hasIncompletePairs = false;
 
-        document.querySelectorAll('.input-day-birds').forEach(i => { if(i.value) dayBirds += parseInt(i.value); });
-        document.querySelectorAll('.input-day-weight').forEach(i => { if(i.value) dayWeight += parseFloat(i.value); });
-        document.querySelectorAll('.input-night-birds').forEach(i => { if(i.value) nightBirds += parseInt(i.value); });
-        document.querySelectorAll('.input-night-weight').forEach(i => { if(i.value) nightWeight += parseFloat(i.value); });
+        document.querySelectorAll('.product-row').forEach(row => {
+            const dayBirdsInput = row.querySelector('.input-day-birds');
+            const dayWeightInput = row.querySelector('.input-day-weight');
+            const nightBirdsInput = row.querySelector('.input-night-birds');
+            const nightWeightInput = row.querySelector('.input-night-weight');
 
-        // Birds are whole numbers, so keep them as integers
+            const dB = dayBirdsInput.value.trim();
+            const dW = dayWeightInput.value.trim();
+            const nB = nightBirdsInput.value.trim();
+            const nW = nightWeightInput.value.trim();
+
+            // Validate Day Shift Pair
+            dayBirdsInput.classList.remove('input-incomplete');
+            dayWeightInput.classList.remove('input-incomplete');
+            if (dB !== "" && dW === "") {
+                dayWeightInput.classList.add('input-incomplete');
+                hasIncompletePairs = true;
+            } else if (dB === "" && dW !== "") {
+                dayBirdsInput.classList.add('input-incomplete');
+                hasIncompletePairs = true;
+            }
+
+            // Validate Night Shift Pair
+            nightBirdsInput.classList.remove('input-incomplete');
+            nightWeightInput.classList.remove('input-incomplete');
+            if (nB !== "" && nW === "") {
+                nightWeightInput.classList.add('input-incomplete');
+                hasIncompletePairs = true;
+            } else if (nB === "" && nW !== "") {
+                nightBirdsInput.classList.add('input-incomplete');
+                hasIncompletePairs = true;
+            }
+
+            // Accumulate totals
+            if (dB) dayBirds += parseInt(dB);
+            if (dW) dayWeight += parseFloat(dW);
+            if (nB) nightBirds += parseInt(nB);
+            if (nW) nightWeight += parseFloat(nW);
+        });
+
         document.getElementById('total-day-birds').innerText = dayBirds;
         document.getElementById('total-night-birds').innerText = nightBirds;
-
-        // Weights carry decimals, so wrap them safely with .toFixed(2)
         document.getElementById('total-day-weight').innerText = dayWeight.toFixed(2);
         document.getElementById('total-night-weight').innerText = nightWeight.toFixed(2);
-    });
 
-    // 3. ARROW KEYBOARD GRID NAVIGATION & ENTER KEY FIX
+        return hasIncompletePairs;
+    }
+
+    document.getElementById('product-rows').addEventListener('input', calculateTotalsAndValidate);
+    calculateTotalsAndValidate(); // Run initially on load
+
+    // 4. ARROW KEYBOARD GRID NAVIGATION & ENTER KEY FIX
     document.getElementById('product-rows').addEventListener('keydown', function(e) {
         const activeInput = document.activeElement;
         if (!activeInput || !activeInput.classList.contains('nav-cell')) return;
 
-        // NEW: If the user presses "Enter" inside any input grid box, block the immediate save
         if (e.key === 'Enter') {
             e.preventDefault();
             return;
@@ -224,11 +321,22 @@
         }
     });
 
-    // 4. SUBMIT CONFIRMATION DIALOG BOX
+    // 5. SAVE CONFIRMATION DIALOG BOX & FORM VALIDATION
     document.getElementById('production-form').addEventListener('submit', function(e) {
+        // Skip check if delete button was clicked
+        if (e.submitter && e.submitter.classList.contains('btn-delete')) return;
+
+        // Block submit if incomplete pairs exist
+        const hasIncomplete = calculateTotalsAndValidate();
+        if (hasIncomplete) {
+            e.preventDefault();
+            alert("⚠️ Error: You cannot submit incomplete entries!\n\nBoth Bird Count and Weight must be filled together (highlighted in light red). Please complete or clear those fields before saving.");
+            return;
+        }
+
         const confirmation = confirm("Are you sure you want to save the entered production data?");
         if (!confirmation) {
-            e.preventDefault(); // Stop the form submission if they click "Cancel"
+            e.preventDefault();
         }
     });
 </script>

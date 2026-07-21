@@ -26,6 +26,17 @@ class EntryLog(db.Model):
     
     product = db.relationship('Product', backref=db.backref('logs', lazy=True))
 
+class ShiftSummaryInput(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.String(10), nullable=False)
+    
+    day_before_birds = db.Column(db.Integer, default=0)
+    day_before_weight = db.Column(db.Float, default=0.0)
+    night_before_birds = db.Column(db.Integer, default=0)
+    night_before_weight = db.Column(db.Float, default=0.0)
+
+    __table_args__ = (db.UniqueConstraint('date', name='_date_summary_uc'),)
+
 # --- DATABASE SEEDING ---
 def seed_products():
     initial_products = [
@@ -92,14 +103,14 @@ with app.app_context():
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
+    selected_date_str = request.args.get('date') or request.form.get('date') or datetime.utcnow().strftime('%Y-%m-%d')
+    entry_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+
     if request.method == 'POST':
-        date_str = request.form.get('date')
-        entry_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else datetime.utcnow().date()
-        
+        EntryLog.query.filter_by(date=entry_date).delete()
         products = Product.query.all()
         
         for product in products:
-            # Process Day Shift
             day_birds = request.form.get(f'day_birds_{product.id}')
             day_weight = request.form.get(f'day_weight_{product.id}')
             if day_birds or day_weight:
@@ -109,7 +120,6 @@ def home():
                     weight=float(day_weight) if day_weight else None
                 ))
 
-            # Process Night Shift
             night_birds = request.form.get(f'night_birds_{product.id}')
             night_weight = request.form.get(f'night_weight_{product.id}')
             if night_birds or night_weight:
@@ -121,11 +131,23 @@ def home():
                 
         db.session.commit()
         flash("Production data for both shifts saved successfully!", "success")
-        return redirect(url_for('home'))
+        return redirect(url_for('home', date=selected_date_str))
         
-    products = Product.query.all()
-    current_date = datetime.utcnow().strftime('%Y-%m-%d')
-    return render_template('index.html', products=products, current_date=current_date)
+    products = Product.query.order_by(Product.code).all()
+    logs = EntryLog.query.filter_by(date=entry_date).all()
+    
+    existing_logs = {}
+    for log in logs:
+        if log.product_id not in existing_logs:
+            existing_logs[log.product_id] = {}
+        if log.shift == 'day':
+            existing_logs[log.product_id]['day_birds'] = log.birds
+            existing_logs[log.product_id]['day_weight'] = log.weight
+        elif log.shift == 'night':
+            existing_logs[log.product_id]['night_birds'] = log.birds
+            existing_logs[log.product_id]['night_weight'] = log.weight
+
+    return render_template('index.html', products=products, current_date=selected_date_str, existing_logs=existing_logs)
 
 @app.route('/products', methods=['GET', 'POST'])
 def products_manager():
@@ -145,10 +167,9 @@ def products_manager():
     all_products = Product.query.order_by(Product.code).all()
     return render_template('products.html', products=all_products)
 
-# 3. EDIT PRODUCT ROUTE
 @app.route('/products/edit/<int:id>', methods=['POST'])
 def edit_product(id):
-    product = Product.query.get_or_4004(id) if hasattr(Product.query, 'get_or_4004') else Product.query.get(id)
+    product = Product.query.get(id)
     if not product:
         flash("Product not found.", "danger")
         return redirect(url_for('products_manager'))
@@ -157,7 +178,6 @@ def edit_product(id):
     name = request.form.get('name').strip()
     
     if code and name:
-        # Check if the code is taken by another product
         existing = Product.query.filter(Product.code == code, Product.id != id).first()
         if existing:
             flash(f"Product code {code} is already in use by another product!", "danger")
@@ -168,21 +188,142 @@ def edit_product(id):
             flash("Product updated successfully!", "success")
     return redirect(url_for('products_manager'))
 
-
-# 4. DELETE PRODUCT ROUTE
 @app.route('/products/delete/<int:id>', methods=['POST'])
 def delete_product(id):
     product = Product.query.get(id)
     if product:
-        # Delete related shift logs first to prevent database crashes (foreign key constraint)
         EntryLog.query.filter_by(product_id=id).delete()
-        
         db.session.delete(product)
         db.session.commit()
         flash(f"Product '{product.code}' and its log history deleted successfully.", "success")
     else:
         flash("Product not found.", "danger")
     return redirect(url_for('products_manager'))
+
+@app.route('/summary', methods=['GET', 'POST'])
+def summary():
+    selected_date = request.args.get('date') or request.form.get('date') or datetime.today().strftime('%Y-%m-%d')
+    query_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+
+    if request.method == 'POST':
+        day_b_birds = int(request.form.get('day_before_birds') or 0)
+        day_b_weight = float(request.form.get('day_before_weight') or 0.0)
+        night_b_birds = int(request.form.get('night_before_birds') or 0)
+        night_b_weight = float(request.form.get('night_before_weight') or 0.0)
+
+        summary_input = ShiftSummaryInput.query.filter_by(date=selected_date).first()
+        if not summary_input:
+            summary_input = ShiftSummaryInput(date=selected_date)
+            db.session.add(summary_input)
+
+        summary_input.day_before_birds = day_b_birds
+        summary_input.day_before_weight = day_b_weight
+        summary_input.night_before_birds = night_b_birds
+        summary_input.night_before_weight = night_b_weight
+        
+        db.session.commit()
+        flash(f"Before-Process data saved for {selected_date}!", "success")
+        return redirect(url_for('summary', date=selected_date))
+
+    summary_input = ShiftSummaryInput.query.filter_by(date=selected_date).first()
+    products = Product.query.order_by(Product.code).all()
+    logs = EntryLog.query.filter_by(date=query_date).all()
+
+    log_map = {}
+    for log in logs:
+        if log.product_id not in log_map:
+            log_map[log.product_id] = {'day': None, 'night': None}
+        log_map[log.product_id][log.shift] = log
+
+    product_summary_list = []
+    tot_day_after_birds = 0
+    tot_day_after_weight = 0.0
+    tot_night_after_birds = 0
+    tot_night_after_weight = 0.0
+
+    for p in products:
+        day_log = log_map.get(p.id, {}).get('day')
+        night_log = log_map.get(p.id, {}).get('night')
+
+        d_birds = (day_log.birds if day_log and day_log.birds else 0)
+        d_weight = (day_log.weight if day_log and day_log.weight else 0.0)
+        n_birds = (night_log.birds if night_log and night_log.birds else 0)
+        n_weight = (night_log.weight if night_log and night_log.weight else 0.0)
+
+        tot_day_after_birds += d_birds
+        tot_day_after_weight += d_weight
+        tot_night_after_birds += n_birds
+        tot_night_after_weight += n_weight
+
+        product_summary_list.append({
+            'code': p.code,
+            'name': p.name,
+            'day_birds': d_birds,
+            'day_weight': d_weight,
+            'night_birds': n_birds,
+            'night_weight': n_weight,
+            'total_birds': d_birds + n_birds,
+            'total_weight': d_weight + n_weight
+        })
+
+    day_b_birds = summary_input.day_before_birds if summary_input else 0
+    day_b_weight = summary_input.day_before_weight if summary_input else 0.0
+    day_yield_pct = (tot_day_after_weight / day_b_weight * 100) if day_b_weight > 0 else 0.0
+    day_avg_live_wt = (day_b_weight / day_b_birds) if day_b_birds > 0 else 0.0
+    day_avg_proc_wt = (tot_day_after_weight / tot_day_after_birds) if tot_day_after_birds > 0 else 0.0
+
+    night_b_birds = summary_input.night_before_birds if summary_input else 0
+    night_b_weight = summary_input.night_before_weight if summary_input else 0.0
+    night_yield_pct = (tot_night_after_weight / night_b_weight * 100) if night_b_weight > 0 else 0.0
+    night_avg_live_wt = (night_b_weight / night_b_birds) if night_b_birds > 0 else 0.0
+    night_avg_proc_wt = (tot_night_after_weight / tot_night_after_birds) if tot_night_after_birds > 0 else 0.0
+
+    grand_before_birds = day_b_birds + night_b_birds
+    grand_before_weight = day_b_weight + night_b_weight
+    grand_after_birds = tot_day_after_birds + tot_night_after_birds
+    grand_after_weight = tot_day_after_weight + tot_night_after_weight
+    grand_yield_pct = (grand_after_weight / grand_before_weight * 100) if grand_before_weight > 0 else 0.0
+
+    return render_template(
+        'summary.html',
+        selected_date=selected_date,
+        summary_input=summary_input,
+        product_summary_list=product_summary_list,
+        tot_day_after_birds=tot_day_after_birds,
+        tot_day_after_weight=tot_day_after_weight,
+        tot_night_after_birds=tot_night_after_birds,
+        tot_night_after_weight=tot_night_after_weight,
+        day_yield_pct=day_yield_pct,
+        day_avg_live_wt=day_avg_live_wt,
+        day_avg_proc_wt=day_avg_proc_wt,
+        night_yield_pct=night_yield_pct,
+        night_avg_live_wt=night_avg_live_wt,
+        night_avg_proc_wt=night_avg_proc_wt,
+        grand_before_birds=grand_before_birds,
+        grand_before_weight=grand_before_weight,
+        grand_after_birds=grand_after_birds,
+        grand_after_weight=grand_after_weight,
+        grand_yield_pct=grand_yield_pct
+    )
+
+@app.route('/summary/delete', methods=['POST'])
+def delete_summary():
+    selected_date = request.form.get('date')
+    if selected_date:
+        ShiftSummaryInput.query.filter_by(date=selected_date).delete()
+        db.session.commit()
+        flash(f"Summary data for {selected_date} deleted successfully.")
+    return redirect(url_for('summary', date=selected_date))
+
+@app.route('/log/delete', methods=['POST'])
+def delete_log_entries():
+    selected_date = request.form.get('date')
+    if selected_date:
+        target_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        EntryLog.query.filter_by(date=target_date).delete()
+        db.session.commit()
+        flash(f"All production quantities for {selected_date} have been deleted.", "success")
+    return redirect(url_for('home', date=selected_date))
 
 if __name__ == '__main__':
     app.run(debug=True)

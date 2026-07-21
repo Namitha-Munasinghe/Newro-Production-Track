@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Production Summary & Reconciliation</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f7;
+            --container-bg: #ffffff;
+            --text-color: #2c3e50;
+            --card-bg: #ffffff;
+            --border-color: #d5dbdb;
+            --header-bg: #ecf0f1;
+            --alt-row-bg: #f9f9f9;
+            --total-row-bg: #eaeded;
+            --picker-bg: #ebf5fb;
+            --input-bg: #ffffff;
+            --input-text: #2c3e50;
+            --muted-text: #7f8c8d;
+        }
+
+        body.dark-mode {
+            --bg-color: #1a1a2e;
+            --container-bg: #16213e;
+            --text-color: #e0e0e0;
+            --card-bg: #0f3460;
+            --border-color: #2a3b5c;
+            --header-bg: #1f4068;
+            --alt-row-bg: #132743;
+            --total-row-bg: #1f4068;
+            --picker-bg: #102a43;
+            --input-bg: #1f4068;
+            --input-text: #ffffff;
+            --muted-text: #a0aec0;
+        }
+
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: var(--container-bg); 
+            padding: 25px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+
+        .nav-link { 
+            float: right; 
+            background: #3498db; 
+            color: white; 
+            padding: 8px 15px; 
+            text-decoration: none; 
+            border-radius: 4px; 
+            margin-left: 10px; 
+        }
+
+        .theme-toggle-btn {
+            float: right;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+
+        h2, h3 { color: var(--text-color); }
+        h2 { margin-top: 0; }
+
+        .date-picker-bar { 
+            background-color: var(--picker-bg); 
+            padding: 15px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+        }
+
+        .date-picker-bar input, .form-group input { 
+            padding: 6px 10px; 
+            font-size: 1em; 
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+            background-color: var(--input-bg);
+            color: var(--input-text);
+        }
+
+        .grid-2 { display: flex; gap: 20px; margin-bottom: 25px; }
+        .card { 
+            flex: 1; 
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+            padding: 18px; 
+            background: var(--card-bg); 
+        }
+
+        .card-day { border-top: 4px solid #f39c12; }
+        .card-night { border-top: 4px solid #8e44ad; }
+        .card h3 { margin-top: 0; font-size: 1.1em; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; }
+
+        .form-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 4px; }
+        .form-group input { width: 100%; box-sizing: border-box; }
+
+        .stat-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .stat-table td { padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 0.9em; }
+        .stat-table td:last-child { text-align: right; font-weight: bold; }
+
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+        .badge-green { background-color: #d4edda; color: #155724; }
+        .badge-red { background-color: #f8d7da; color: #721c24; }
+
+        body.dark-mode .badge-green { background-color: #1e4620; color: #a3e635; }
+        body.dark-mode .badge-red { background-color: #4a151b; color: #f87171; }
+
+        table.data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table.data-table th, table.data-table td { 
+            border: 1px solid var(--border-color); 
+            padding: 8px 10px; 
+            font-size: 0.9em; 
+        }
+        table.data-table th { background-color: var(--header-bg); text-align: left; }
+        table.data-table td.num, table.data-table th.num { text-align: right; }
+        table.data-table tr:nth-child(even) { background-color: var(--alt-row-bg); }
+        .total-row td { background-color: var(--total-row-bg); font-weight: bold; }
+
+        .btn-calc { 
+            background-color: #2980b9; 
+            color: white; 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            font-weight: bold; 
+            width: 100%; 
+            margin-top: 10px; 
+        }
+
+        .action-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn-save { 
+            flex: 2;
+            background-color: #27ae60; 
+            color: white; 
+            padding: 12px 20px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 1.1em; 
+            font-weight: bold; 
+        }
+
+        .btn-delete { 
+            flex: 1;
+            background-color: #c0392b; 
+            color: white; 
+            padding: 12px 20px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 1.1em; 
+            font-weight: bold; 
+        }
+
+        .alert { padding: 10px; background-color: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 15px; }
+        body.dark-mode .alert { background-color: #1e4620; color: #a3e635; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+    <a href="/" class="nav-link">← Log Sheet</a>
+    <a href="/products" class="nav-link">Product Manager</a>
+    <h2>Daily Shift Summary & Reconciliation</h2>
+    <hr style="border-color: var(--border-color);">
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}<div class="alert">{{ message }}</div>{% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Date Picker Bar -->
+    <div class="date-picker-bar">
+        <form method="GET" action="/summary">
+            <label for="date"><strong>Selected Date:</strong></label>
+            <input type="date" id="date" name="date" value="{{ selected_date }}" onchange="this.form.submit()">
+        </form>
+        <div>
+            <strong>Grand Overall Yield:</strong> 
+            <span class="badge badge-green" id="grand_yield_display">{{ "%.2f"|format(grand_yield_pct) }}%</span>
+        </div>
+    </div>
+
+    <!-- MAIN SUMMARY FORM -->
+    <form method="POST" action="/summary" id="summaryForm">
+        <input type="hidden" name="date" value="{{ selected_date }}">
+        
+        <div class="grid-2">
+            <!-- Day Shift Overview Card -->
+            <div class="card card-day">
+                <h3>☀️ Day Shift (Live vs Processed)</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Before Process Birds</label>
+                        <input type="number" id="day_b_birds" name="day_before_birds" value="{{ summary_input.day_before_birds if summary_input else 0 }}" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Before Process Weight (kg)</label>
+                        <input type="number" id="day_b_weight" name="day_before_weight" step="0.01" value="{{ summary_input.day_before_weight if summary_input else 0.0 }}" min="0">
+                    </div>
+                </div>
+
+                <table class="stat-table">
+                    <tr><td>After-Process Birds Total:</td><td id="day_after_birds_display">{{ tot_day_after_birds }}</td></tr>
+                    <tr><td>After-Process Weight Total:</td><td id="day_after_weight_display">{{ "%.2f"|format(tot_day_after_weight) }} kg</td></tr>
+                    <tr><td>Day Shift Yield Recovery:</td><td><span class="badge badge-green" id="day_yield_display">{{ "%.2f"|format(day_yield_pct) }}%</span></td></tr>
+                    <tr><td>Processing Shrink Rate:</td><td><span class="badge badge-red" id="day_shrink_display">{{ "%.2f"|format(100 - day_yield_pct) if day_yield_pct > 0 else "0.00" }}%</span></td></tr>
+                    <tr><td>Avg Weight / Bird (Live):</td><td id="day_avg_live_display">{{ "%.2f"|format(day_avg_live_wt) }} kg</td></tr>
+                    <tr><td>Avg Weight / Bird (Processed):</td><td id="day_avg_proc_display">{{ "%.2f"|format(day_avg_proc_wt) }} kg</td></tr>
+                </table>
+            </div>
+
+            <!-- Night Shift Overview Card -->
+            <div class="card card-night">
+                <h3>🌙 Night Shift (Live vs Processed)</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Before Process Birds</label>
+                        <input type="number" id="night_b_birds" name="night_before_birds" value="{{ summary_input.night_before_birds if summary_input else 0 }}" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Before Process Weight (kg)</label>
+                        <input type="number" id="night_b_weight" name="night_before_weight" step="0.01" value="{{ summary_input.night_before_weight if summary_input else 0.0 }}" min="0">
+                    </div>
+                </div>
+
+                <table class="stat-table">
+                    <tr><td>After-Process Birds Total:</td><td id="night_after_birds_display">{{ tot_night_after_birds }}</td></tr>
+                    <tr><td>After-Process Weight Total:</td><td id="night_after_weight_display">{{ "%.2f"|format(tot_night_after_weight) }} kg</td></tr>
+                    <tr><td>Night Shift Yield Recovery:</td><td><span class="badge badge-green" id="night_yield_display">{{ "%.2f"|format(night_yield_pct) }}%</span></td></tr>
+                    <tr><td>Processing Shrink Rate:</td><td><span class="badge badge-red" id="night_shrink_display">{{ "%.2f"|format(100 - night_yield_pct) if night_yield_pct > 0 else "0.00" }}%</span></td></tr>
+                    <tr><td>Avg Weight / Bird (Live):</td><td id="night_avg_live_display">{{ "%.2f"|format(night_avg_live_wt) }} kg</td></tr>
+                    <tr><td>Avg Weight / Bird (Processed):</td><td id="night_avg_proc_display">{{ "%.2f"|format(night_avg_proc_wt) }} kg</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- CALCULATE BUTTON -->
+        <button type="button" class="btn-calc" onclick="calculateSummary()">🧮 Calculate Summary Data</button>
+
+        <br><br>
+        <h3>Finished Products Breakdown (Necessary Items Only)</h3>
+        
+        <!-- SIDE-BY-SIDE SHIFT BREAKDOWN TABLES -->
+        <div class="grid-2">
+            
+            <!-- Day Shift Breakdown -->
+            <div class="card card-day">
+                <h3>☀️ Day Shift Items</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="num">Birds</th>
+                            <th class="num">Weight (kg)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set day_count = namespace(value=0) %}
+                        {% for item in product_summary_list %}
+                            {% if item.day_birds > 0 or item.day_weight > 0 %}
+                                {% set day_count.value = day_count.value + 1 %}
+                                <tr>
+                                    <td><strong>{{ item.code }}</strong> - {{ item.name }}</td>
+                                    <td class="num">{{ item.day_birds }}</td>
+                                    <td class="num">{{ "%.2f"|format(item.day_weight) }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if day_count.value == 0 %}
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: var(--muted-text);">No items produced in Day Shift.</td>
+                            </tr>
+                        {% else %}
+                            <tr class="total-row">
+                                <td>DAY SHIFT TOTAL</td>
+                                <td class="num">{{ tot_day_after_birds }}</td>
+                                <td class="num">{{ "%.2f"|format(tot_day_after_weight) }}</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Night Shift Breakdown -->
+            <div class="card card-night">
+                <h3>🌙 Night Shift Items</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="num">Birds</th>
+                            <th class="num">Weight (kg)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set night_count = namespace(value=0) %}
+                        {% for item in product_summary_list %}
+                            {% if item.night_birds > 0 or item.night_weight > 0 %}
+                                {% set night_count.value = night_count.value + 1 %}
+                                <tr>
+                                    <td><strong>{{ item.code }}</strong> - {{ item.name }}</td>
+                                    <td class="num">{{ item.night_birds }}</td>
+                                    <td class="num">{{ "%.2f"|format(item.night_weight) }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if night_count.value == 0 %}
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: var(--muted-text);">No items produced in Night Shift.</td>
+                            </tr>
+                        {% else %}
+                            <tr class="total-row">
+                                <td>NIGHT SHIFT TOTAL</td>
+                                <td class="num">{{ tot_night_after_birds }}</td>
+                                <td class="num">{{ "%.2f"|format(tot_night_after_weight) }}</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <!-- SAVE & DELETE BUTTONS AT THE BOTTOM -->
+        <div class="action-row">
+            <button type="submit" class="btn-save">💾 Save Summary Data for {{ selected_date }}</button>
+            <button type="submit" class="btn-delete" formaction="/summary/delete" onclick="return confirmDelete('{{ selected_date }}')">🗑️ Delete Summary</button>
+        </div>
+    </form>
+
+</div>
+
+<!-- JavaScript Logic -->
+<script>
+    function confirmDelete(dateStr) {
+        return confirm(`Are you sure you want to delete the summary data for ${dateStr}? This action cannot be undone.`);
+    }
+
+    const totDayAfterBirds = parseFloat("{{ tot_day_after_birds }}") || 0;
+    const totDayAfterWeight = parseFloat("{{ tot_day_after_weight }}") || 0;
+    const totNightAfterBirds = parseFloat("{{ tot_night_after_birds }}") || 0;
+    const totNightAfterWeight = parseFloat("{{ tot_night_after_weight }}") || 0;
+
+    function calculateSummary() {
+        const dayBeforeBirds = parseFloat(document.getElementById('day_b_birds').value) || 0;
+        const dayBeforeWeight = parseFloat(document.getElementById('day_b_weight').value) || 0;
+
+        const nightBeforeBirds = parseFloat(document.getElementById('night_b_birds').value) || 0;
+        const nightBeforeWeight = parseFloat(document.getElementById('night_b_weight').value) || 0;
+
+        // Day Calculations
+        const dayYield = dayBeforeWeight > 0 ? (totDayAfterWeight / dayBeforeWeight * 100) : 0;
+        const dayShrink = dayBeforeWeight > 0 ? (100 - dayYield) : 0;
+        const dayAvgLive = dayBeforeBirds > 0 ? (dayBeforeWeight / dayBeforeBirds) : 0;
+        const dayAvgProc = totDayAfterBirds > 0 ? (totDayAfterWeight / totDayAfterBirds) : 0;
+
+        // Night Calculations
+        const nightYield = nightBeforeWeight > 0 ? (totNightAfterWeight / nightBeforeWeight * 100) : 0;
+        const nightShrink = nightBeforeWeight > 0 ? (100 - nightYield) : 0;
+        const nightAvgLive = nightBeforeBirds > 0 ? (nightBeforeWeight / nightBeforeBirds) : 0;
+        const nightAvgProc = totNightAfterBirds > 0 ? (totNightAfterWeight / totNightAfterBirds) : 0;
+
+        // Grand Overall Calculations
+        const grandBeforeWeight = dayBeforeWeight + nightBeforeWeight;
+        const grandAfterWeight = totDayAfterWeight + totNightAfterWeight;
+        const grandYield = grandBeforeWeight > 0 ? (grandAfterWeight / grandBeforeWeight * 100) : 0;
+
+        // Update UI Displays
+        document.getElementById('day_yield_display').innerText = dayYield.toFixed(2) + '%';
+        document.getElementById('day_shrink_display').innerText = dayShrink.toFixed(2) + '%';
+        document.getElementById('day_avg_live_display').innerText = dayAvgLive.toFixed(2) + ' kg';
+        document.getElementById('day_avg_proc_display').innerText = dayAvgProc.toFixed(2) + ' kg';
+
+        document.getElementById('night_yield_display').innerText = nightYield.toFixed(2) + '%';
+        document.getElementById('night_shrink_display').innerText = nightShrink.toFixed(2) + '%';
+        document.getElementById('night_avg_live_display').innerText = nightAvgLive.toFixed(2) + ' kg';
+        document.getElementById('night_avg_proc_display').innerText = nightAvgProc.toFixed(2) + ' kg';
+
+        document.getElementById('grand_yield_display').innerText = grandYield.toFixed(2) + '%';
+    }
+
+    function applySavedTheme() {
+        const darkModeSaved = localStorage.getItem('theme_dark_mode') === 'true';
+        const btn = document.getElementById('themeToggleBtn');
+        if (darkModeSaved) {
+            document.body.classList.add('dark-mode');
+            btn.innerHTML = '☀️ Light Mode';
+            btn.style.backgroundColor = '#f39c12';
+        } else {
+            document.body.classList.remove('dark-mode');
+            btn.innerHTML = '🌙 Dark Mode';
+            btn.style.backgroundColor = '#e74c3c';
+        }
+    }
+
+    function toggleDarkMode() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('theme_dark_mode', isDark);
+        applySavedTheme();
+    }
+
+    applySavedTheme();
+</script>
+
+</body>
+</html>
