@@ -14,10 +14,8 @@
         .search-section { flex-grow: 1; max-width: 400px; }
         .search-input { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #2980b9; border-radius: 4px; box-sizing: border-box; }
 
-        /* Modified table properties to support sticky headers without overlapping borders */
         table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; }
         
-        /* Sticky Column Header Configuration */
         th { 
             position: sticky; 
             z-index: 10;
@@ -27,38 +25,22 @@
         thead tr:nth-child(1) th { top: 0; }
         thead tr:nth-child(2) th { top: 35px; }
 
-        th, td { border-right: 1px solid #7f8c8d; border-bottom: 1px solid #7f8c8d; padding: 6px 10px; text-align: left; font-size: 0.95em; }
+        th, td { border-right: 1px solid #7f8c8d; border-bottom: 1px solid #7f8c8d; padding: 8px 10px; text-align: left; font-size: 0.95em; }
         table tr th:first-child, table tr td:first-child { border-left: 1px solid #7f8c8d; }
         table tr:first-child th { border-top: 1px solid #7f8c8d; }
         
-        tbody td {
-            background-color: #ffffff !important;
-            position: relative;
-            z-index: 1;
-        }
+        tbody td { background-color: #ffffff !important; position: relative; z-index: 1; }
 
         .header-main { text-align: center; font-weight: bold; text-transform: uppercase; background-color: #d5dbdb !important; }
         .header-sub { background-color: #eaeded !important; color: #2c3e50; font-size: 0.85em; text-transform: uppercase; }
-        
-        input[type="number"] { width: 100%; border: 1px solid #ccd1d1; padding: 4px; box-sizing: border-box; border-radius: 3px; font-size: 0.95em; transition: background-color 0.2s, border-color 0.2s; }
-        input[type="number"]:focus { background-color: #e8f8f5; border: 1px solid #1abc9c; outline: none; }
-        
-        /* CLASS FOR HIGHLIGHTING INCOMPLETE PAIRS */
-        input.input-incomplete {
-            background-color: #fadbd8 !important; /* Light Red */
-            border: 1px solid #e74c3c !important;
-        }
 
         .total-row { font-weight: bold; background-color: #d5dbdb; }
         .total-row td { position: sticky; bottom: 0; background-color: #d5dbdb !important; z-index: 5; box-shadow: inset 0 1px 0 #7f8c8d, inset 0 -1px 0 #7f8c8d; }
 
-        /* BUTTON GROUP & STYLING */
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 25px;
-        }
-        .btn-submit { 
+        /* BUTTON GROUP STYLING */
+        .button-group { display: flex; gap: 15px; margin-top: 25px; }
+        
+        .btn-enter-data { 
             flex: 2; 
             padding: 14px; 
             background-color: #27ae60; 
@@ -69,8 +51,11 @@
             cursor: pointer; 
             font-weight: bold; 
             text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            box-sizing: border-box;
         }
-        .btn-submit:hover { background-color: #219653; }
+        .btn-enter-data:hover { background-color: #219653; }
 
         .btn-summary { 
             flex: 2; 
@@ -121,7 +106,6 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Date selector reloads data for the selected date -->
     <div class="controls-section">
         <div class="date-section">
             <form id="date-form" method="GET" action="/">
@@ -134,72 +118,70 @@
         </div>
     </div>
 
-    <!-- MAIN LOG SHEET FORM -->
-    <form id="production-form" method="POST" action="/">
-        <input type="hidden" name="date" value="{{ current_date }}">
-
-        <table>
-            <thead>
-                <tr>
-                    <th rowspan="2" style="width: 40%; vertical-align: middle;">Product Description</th>
-                    <th colspan="2" class="header-main" style="width: 30%;">Day Shift</th>
-                    <th colspan="2" class="header-main" style="width: 30%;">Night Shift</th>
-                </tr>
-                <tr>
-                    <th class="header-sub">Birds</th>
-                    <th class="header-sub">Weight</th>
-                    <th class="header-sub">Birds</th>
-                    <th class="header-sub">Weight</th>
-                </tr>
-            </thead>
-            <tbody id="product-rows">
-                {% for product in products %}
-                {% set item = existing_logs.get(product.id, {}) if existing_logs else {} %}
-                <tr class="product-row">
-                    <td class="product-text"><strong>{{ product.code }}</strong> - {{ product.name }}</td>
-                    
-                    <!-- Day Shift Columns -->
-                    <td><input type="number" name="day_birds_{{ product.id }}" class="nav-cell input-day-birds" min="0" placeholder="-" value="{{ item.day_birds if item.day_birds is number and item.day_birds != 0 else '' }}"></td>
-                    <td><input type="number" name="day_weight_{{ product.id }}" class="nav-cell input-day-weight" min="0" step="0.01" placeholder="-" value="{{ '%.2f'|format(item.day_weight) if item.day_weight is number and item.day_weight != 0 else '' }}"></td>
-                    
-                    <!-- Night Shift Columns -->
-                    <td><input type="number" name="night_birds_{{ product.id }}" class="nav-cell input-night-birds" min="0" placeholder="-" value="{{ item.night_birds if item.night_birds is number and item.night_birds != 0 else '' }}"></td>
-                    <td><input type="number" name="night_weight_{{ product.id }}" class="nav-cell input-night-weight" min="0" step="0.01" placeholder="-" value="{{ '%.2f'|format(item.night_weight) if item.night_weight is number and item.night_weight != 0 else '' }}"></td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" style="text-align: center; color: #7f8c8d;">No products in database yet.</td>
-                </tr>
-                {% endfor %}
+    <!-- DISPLAY TABLE -->
+    <table>
+        <thead>
+            <tr>
+                <th rowspan="2" style="width: 40%; vertical-align: middle;">Product Description</th>
+                <th colspan="2" class="header-main" style="width: 30%;">Day Shift</th>
+                <th colspan="2" class="header-main" style="width: 30%;">Night Shift</th>
+            </tr>
+            <tr>
+                <th class="header-sub">Birds</th>
+                <th class="header-sub">Weight</th>
+                <th class="header-sub">Birds</th>
+                <th class="header-sub">Weight</th>
+            </tr>
+        </thead>
+        <tbody id="product-rows">
+            {% for product in products %}
+            {% set item = existing_logs.get(product.id, {}) if existing_logs else {} %}
+            <tr class="product-row">
+                <td class="product-text"><strong>{{ product.code }}</strong> - {{ product.name }}</td>
                 
-                <tr class="total-row">
-                    <td>Total</td>
-                    <td id="total-day-birds">0</td>
-                    <td id="total-day-weight">0.00</td>
-                    <td id="total-night-birds">0</td>
-                    <td id="total-night-weight">0.00</td>
-                </tr>
-            </tbody>
-        </table>
+                <!-- Day Shift Data -->
+                <td>{{ item.day_birds if item.day_birds and item.day_birds != 0 else '-' }}</td>
+                <td>{{ '%.2f'|format(item.day_weight) if item.day_weight and item.day_weight != 0 else '-' }}</td>
+                
+                <!-- Night Shift Data -->
+                <td>{{ item.night_birds if item.night_birds and item.night_birds != 0 else '-' }}</td>
+                <td>{{ '%.2f'|format(item.night_weight) if item.night_weight and item.night_weight != 0 else '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #7f8c8d;">No products in database yet.</td>
+            </tr>
+            {% endfor %}
+            
+            <tr class="total-row">
+                <td>Total</td>
+                <td id="total-day-birds">0</td>
+                <td id="total-day-weight">0.00</td>
+                <td id="total-night-birds">0</td>
+                <td id="total-night-weight">0.00</td>
+            </tr>
+        </tbody>
+    </table>
 
-        {% if products %}
-        <!-- ACTION BUTTONS GROUP -->
-        <div class="button-group">
-            <button type="submit" name="action" value="save" class="btn-submit">💾 Save Quantities</button>
-            <a href="/summary?date={{ current_date }}" id="calculate-summary-btn" class="btn-summary">📊 Summary</a>
-            <button type="submit" name="action" value="delete" formaction="/log/delete" class="btn-delete" onclick="return confirmDelete('{{ current_date }}')">🗑️ Delete Logs</button>
-        </div>
-        {% endif %}
-    </form>
+    {% if products %}
+    <!-- ACTION BUTTONS -->
+    <div class="button-group">
+        <a href="/entry?date={{ current_date }}" class="btn-enter-data">✍️ Enter Data</a>
+        <a href="/summary?date={{ current_date }}" class="btn-summary">📊 Summary</a>
+        <form method="POST" action="/log/delete" style="flex: 1;" onsubmit="return confirmDelete('{{ current_date }}')">
+            <input type="hidden" name="date" value="{{ current_date }}">
+            <button type="submit" class="btn-delete" style="width: 100%;">🗑️ Delete Logs</button>
+        </form>
+    </div>
+    {% endif %}
 </div>
 
 <script>
-    // 1. DELETE CONFIRMATION PROMPT
     function confirmDelete(dateStr) {
         return confirm(`Are you sure you want to CLEAR/DELETE all log entries for ${dateStr}? This action cannot be undone.`);
     }
 
-    // 2. SEARCH FILTER
+    // Quick Search Filter
     const searchBox = document.getElementById('search-box');
     const productRows = document.querySelectorAll('.product-row');
 
@@ -207,138 +189,34 @@
         const query = searchBox.value.toLowerCase().trim();
         productRows.forEach(row => {
             const text = row.querySelector('.product-text').textContent.toLowerCase();
-            
-            const hasData = row.querySelector('.input-day-birds').value || 
-                            row.querySelector('.input-day-weight').value ||
-                            row.querySelector('.input-night-birds').value || 
-                            row.querySelector('.input-night-weight').value;
-
-            if (text.includes(query) || hasData) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
+            row.style.display = text.includes(query) ? "" : "none";
         });
     });
 
-    // 3. REAL-TIME MATH CALCULATION & INCOMPLETE PAIR HIGHLIGHTING
-    function calculateTotalsAndValidate() {
+    // Calculate Totals for the page
+    function calculateTotals() {
         let dayBirds = 0, dayWeight = 0, nightBirds = 0, nightWeight = 0;
-        let hasIncompletePairs = false;
 
         document.querySelectorAll('.product-row').forEach(row => {
-            const dayBirdsInput = row.querySelector('.input-day-birds');
-            const dayWeightInput = row.querySelector('.input-day-weight');
-            const nightBirdsInput = row.querySelector('.input-night-birds');
-            const nightWeightInput = row.querySelector('.input-night-weight');
+            const cells = row.querySelectorAll('td');
+            const dB = parseInt(cells[1].innerText);
+            const dW = parseFloat(cells[2].innerText);
+            const nB = parseInt(cells[3].innerText);
+            const nW = parseFloat(cells[4].innerText);
 
-            const dB = dayBirdsInput.value.trim();
-            const dW = dayWeightInput.value.trim();
-            const nB = nightBirdsInput.value.trim();
-            const nW = nightWeightInput.value.trim();
-
-            // Validate Day Shift Pair
-            dayBirdsInput.classList.remove('input-incomplete');
-            dayWeightInput.classList.remove('input-incomplete');
-            if (dB !== "" && dW === "") {
-                dayWeightInput.classList.add('input-incomplete');
-                hasIncompletePairs = true;
-            } else if (dB === "" && dW !== "") {
-                dayBirdsInput.classList.add('input-incomplete');
-                hasIncompletePairs = true;
-            }
-
-            // Validate Night Shift Pair
-            nightBirdsInput.classList.remove('input-incomplete');
-            nightWeightInput.classList.remove('input-incomplete');
-            if (nB !== "" && nW === "") {
-                nightWeightInput.classList.add('input-incomplete');
-                hasIncompletePairs = true;
-            } else if (nB === "" && nW !== "") {
-                nightBirdsInput.classList.add('input-incomplete');
-                hasIncompletePairs = true;
-            }
-
-            // Accumulate totals
-            if (dB) dayBirds += parseInt(dB);
-            if (dW) dayWeight += parseFloat(dW);
-            if (nB) nightBirds += parseInt(nB);
-            if (nW) nightWeight += parseFloat(nW);
+            if (!isNaN(dB)) dayBirds += dB;
+            if (!isNaN(dW)) dayWeight += dW;
+            if (!isNaN(nB)) nightBirds += nB;
+            if (!isNaN(nW)) nightWeight += nW;
         });
 
         document.getElementById('total-day-birds').innerText = dayBirds;
         document.getElementById('total-night-birds').innerText = nightBirds;
         document.getElementById('total-day-weight').innerText = dayWeight.toFixed(2);
         document.getElementById('total-night-weight').innerText = nightWeight.toFixed(2);
-
-        return hasIncompletePairs;
     }
 
-    document.getElementById('product-rows').addEventListener('input', calculateTotalsAndValidate);
-    calculateTotalsAndValidate(); // Run initially on load
-
-    // 4. ARROW KEYBOARD GRID NAVIGATION & ENTER KEY FIX
-    document.getElementById('product-rows').addEventListener('keydown', function(e) {
-        const activeInput = document.activeElement;
-        if (!activeInput || !activeInput.classList.contains('nav-cell')) return;
-
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            return;
-        }
-
-        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
-
-        const currentTd = activeInput.parentElement;
-        const currentTr = currentTd.parentElement;
-        const rowCells = Array.from(currentTr.querySelectorAll('.nav-cell'));
-        const colIndex = rowCells.indexOf(activeInput);
-        
-        const allVisibleRows = Array.from(document.querySelectorAll('.product-row')).filter(row => row.style.display !== 'none');
-        const rowIndex = allVisibleRows.indexOf(currentTr);
-
-        let targetInput = null;
-
-        switch (e.key) {
-            case 'ArrowLeft':
-                if (colIndex > 0) targetInput = rowCells[colIndex - 1];
-                break;
-            case 'ArrowRight':
-                if (colIndex < rowCells.length - 1) targetInput = rowCells[colIndex + 1];
-                break;
-            case 'ArrowUp':
-                if (rowIndex > 0) targetInput = allVisibleRows[rowIndex - 1].querySelectorAll('.nav-cell')[colIndex];
-                break;
-            case 'ArrowDown':
-                if (rowIndex < allVisibleRows.length - 1) targetInput = allVisibleRows[rowIndex + 1].querySelectorAll('.nav-cell')[colIndex];
-                break;
-        }
-
-        if (targetInput) {
-            e.preventDefault();
-            targetInput.focus();
-            targetInput.select();
-        }
-    });
-
-    // 5. SAVE CONFIRMATION DIALOG BOX & FORM VALIDATION
-    document.getElementById('production-form').addEventListener('submit', function(e) {
-        // Skip check if delete button was clicked
-        if (e.submitter && e.submitter.classList.contains('btn-delete')) return;
-
-        // Block submit if incomplete pairs exist
-        const hasIncomplete = calculateTotalsAndValidate();
-        if (hasIncomplete) {
-            e.preventDefault();
-            alert("⚠️ Error: You cannot submit incomplete entries!\n\nBoth Bird Count and Weight must be filled together (highlighted in light red). Please complete or clear those fields before saving.");
-            return;
-        }
-
-        const confirmation = confirm("Are you sure you want to save the entered production data?");
-        if (!confirmation) {
-            e.preventDefault();
-        }
-    });
+    calculateTotals();
 </script>
 
 </body>

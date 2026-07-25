@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -99,55 +99,115 @@ with app.app_context():
     db.create_all()
     seed_products()
 
-# --- ROUTES ---
+# --- MAIN ROUTES ---
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def home():
-    selected_date_str = request.args.get('date') or request.form.get('date') or datetime.utcnow().strftime('%Y-%m-%d')
+    selected_date_str = request.args.get('date') or datetime.utcnow().strftime('%Y-%m-%d')
     entry_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
-
-    if request.method == 'POST':
-        EntryLog.query.filter_by(date=entry_date).delete()
-        products = Product.query.all()
-        
-        for product in products:
-            day_birds = request.form.get(f'day_birds_{product.id}')
-            day_weight = request.form.get(f'day_weight_{product.id}')
-            if day_birds or day_weight:
-                db.session.add(EntryLog(
-                    date=entry_date, shift='day', product_id=product.id,
-                    birds=int(day_birds) if day_birds else None,
-                    weight=float(day_weight) if day_weight else None
-                ))
-
-            night_birds = request.form.get(f'night_birds_{product.id}')
-            night_weight = request.form.get(f'night_weight_{product.id}')
-            if night_birds or night_weight:
-                db.session.add(EntryLog(
-                    date=entry_date, shift='night', product_id=product.id,
-                    birds=int(night_birds) if night_birds else None,
-                    weight=float(night_weight) if night_weight else None
-                ))
-                
-        db.session.commit()
-        flash("Production data for both shifts saved successfully!", "success")
-        return redirect(url_for('home', date=selected_date_str))
-        
+    
     products = Product.query.order_by(Product.code).all()
     logs = EntryLog.query.filter_by(date=entry_date).all()
     
+    # Aggregate entries per product for display
     existing_logs = {}
     for log in logs:
         if log.product_id not in existing_logs:
-            existing_logs[log.product_id] = {}
+            existing_logs[log.product_id] = {'day_birds': 0, 'day_weight': 0.0, 'night_birds': 0, 'night_weight': 0.0}
+        
         if log.shift == 'day':
-            existing_logs[log.product_id]['day_birds'] = log.birds
-            existing_logs[log.product_id]['day_weight'] = log.weight
+            existing_logs[log.product_id]['day_birds'] += (log.birds or 0)
+            existing_logs[log.product_id]['day_weight'] += (log.weight or 0.0)
         elif log.shift == 'night':
-            existing_logs[log.product_id]['night_birds'] = log.birds
-            existing_logs[log.product_id]['night_weight'] = log.weight
+            existing_logs[log.product_id]['night_birds'] += (log.birds or 0)
+            existing_logs[log.product_id]['night_weight'] += (log.weight or 0.0)
 
     return render_template('index.html', products=products, current_date=selected_date_str, existing_logs=existing_logs)
+
+@app.route('/entry')
+def batch_entry():
+    selected_date_str = request.args.get('date') or datetime.utcnow().strftime('%Y-%m-%d')
+    products = Product.query.order_by(Product.code).all()
+    return render_template('batch_entry.html', products=products, current_date=selected_date_str)
+
+# --- BATCH ENTRY API ENDPOINTS ---
+
+@app.route('/api/get-saved-batches', methods=['GET'])
+def get_saved_batches():
+    """
+    Retrieves all batch entries for a given date and shift from SQLite.
+    Structures data by product ID for easy front-end parsing.
+    """
+    selected_date_str = request.args.get('date') or datetime.utcnow().strftime('%Y-%m-%d')
+    shift = request.args.get('shift', 'day')
+
+    try:
+        entry_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        logs = EntryLog.query.filter_by(date=entry_date, shift=shift).all()
+
+        # Group individual entry rows by product_id
+        grouped_entries = {}
+        for log in logs:
+            if log.product_id not in grouped_entries:
+                grouped_entries[log.product_id] = []
+            
+            grouped_entries[log.product_id].append({
+                'birds': log.birds if log.birds is not None else '',
+                'weight': log.weight if log.weight is not None else ''
+            })
+
+        # Format as list of product batch objects
+        entries = [
+            {'product_id': p_id, 'batches': batches}
+            for p_id, batches in grouped_entries.items()
+        ]
+
+        return jsonify({'status': 'success', 'entries': entries})
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/save-batches', methods=['POST'])
+def save_batches():
+    data = request.get_json()
+    if not data:
+        return jsonify({'status': 'error', 'message': 'Invalid data payload'}), 400
+
+    selected_date_str = data.get('date')
+    shift = data.get('shift')
+    entries = data.get('entries', [])
+
+    try:
+        entry_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+
+        # Overwrite previous logs for the products submitted in this shift batch
+        for entry in entries:
+            product_id = entry.get('product_id')
+            batches = entry.get('batches', [])
+
+            # Clear existing logs for this product/date/shift before saving new batch rows
+            EntryLog.query.filter_by(date=entry_date, shift=shift, product_id=product_id).delete()
+
+            for b in batches:
+                birds = b.get('birds')
+                weight = b.get('weight')
+                if birds or weight:
+                    db.session.add(EntryLog(
+                        date=entry_date,
+                        shift=shift,
+                        product_id=product_id,
+                        birds=birds if birds else None,
+                        weight=weight if weight else None
+                    ))
+
+        db.session.commit()
+        return jsonify({'status': 'success', 'message': f'Saved successfully for {shift.upper()} shift!'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+# --- SUMMARY & PRODUCT MANAGEMENT ROUTES ---
 
 @app.route('/products', methods=['GET', 'POST'])
 def products_manager():
@@ -229,11 +289,18 @@ def summary():
     products = Product.query.order_by(Product.code).all()
     logs = EntryLog.query.filter_by(date=query_date).all()
 
+    # Aggregate batch sums per product for summary calculations
     log_map = {}
     for log in logs:
         if log.product_id not in log_map:
-            log_map[log.product_id] = {'day': None, 'night': None}
-        log_map[log.product_id][log.shift] = log
+            log_map[log.product_id] = {'day_birds': 0, 'day_weight': 0.0, 'night_birds': 0, 'night_weight': 0.0}
+        
+        if log.shift == 'day':
+            log_map[log.product_id]['day_birds'] += (log.birds or 0)
+            log_map[log.product_id]['day_weight'] += (log.weight or 0.0)
+        elif log.shift == 'night':
+            log_map[log.product_id]['night_birds'] += (log.birds or 0)
+            log_map[log.product_id]['night_weight'] += (log.weight or 0.0)
 
     product_summary_list = []
     tot_day_after_birds = 0
@@ -242,13 +309,12 @@ def summary():
     tot_night_after_weight = 0.0
 
     for p in products:
-        day_log = log_map.get(p.id, {}).get('day')
-        night_log = log_map.get(p.id, {}).get('night')
+        p_data = log_map.get(p.id, {'day_birds': 0, 'day_weight': 0.0, 'night_birds': 0, 'night_weight': 0.0})
 
-        d_birds = (day_log.birds if day_log and day_log.birds else 0)
-        d_weight = (day_log.weight if day_log and day_log.weight else 0.0)
-        n_birds = (night_log.birds if night_log and night_log.birds else 0)
-        n_weight = (night_log.weight if night_log and night_log.weight else 0.0)
+        d_birds = p_data['day_birds']
+        d_weight = p_data['day_weight']
+        n_birds = p_data['night_birds']
+        n_weight = p_data['night_weight']
 
         tot_day_after_birds += d_birds
         tot_day_after_weight += d_weight

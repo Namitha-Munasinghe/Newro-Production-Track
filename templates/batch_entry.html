@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Tab Batch Entry System</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f7; color: #2c3e50; }
+        
+        /* Top Navigation Bar */
+        .top-bar {
+            background-color: #2c3e50;
+            color: white;
+            padding: 12px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .top-bar h2 { margin: 0; font-size: 1.2em; }
+        .top-controls { display: flex; gap: 20px; align-items: center; }
+        .nav-back { color: #3498db; text-decoration: none; font-weight: bold; font-size: 0.9em; background: #ffffff; padding: 6px 12px; border-radius: 4px; }
+        .nav-back:hover { background: #ecf0f1; }
+        
+        /* Shift Toggle Control */
+        .shift-toggle-container {
+            display: flex;
+            background: #34495e;
+            border-radius: 6px;
+            padding: 3px;
+        }
+        .shift-btn {
+            background: transparent;
+            border: none;
+            color: #bdc3c7;
+            padding: 6px 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .shift-btn.active-day { background: #f39c12; color: white; }
+        .shift-btn.active-night { background: #8e44ad; color: white; }
+
+        /* Main Workspace Layout */
+        .dashboard-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-right: 1px solid #dcdde1;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            font-size: 0.9em;
+        }
+        .product-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .product-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border: 1px solid #e1e8ed;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        .product-item:hover { background: #e8f4f8; border-color: #3498db; }
+        .product-item.active-open { border-left: 4px solid #3498db; background: #ebf5fb; }
+        .product-item .badge { font-size: 0.75em; background: #27ae60; color: white; padding: 2px 6px; border-radius: 10px; display: none; }
+
+        /* Workspace */
+        .workspace {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f4f6f7;
+        }
+        .workspace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* Product Card */
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dcdde1;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .product-card:focus-within {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+        .card-header {
+            background: #ebf5fb;
+            padding: 12px 15px;
+            border-bottom: 1px solid #dcdde1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header h3 { margin: 0; font-size: 1em; color: #2c3e50; }
+        .btn-close-card { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #7f8c8d; }
+        .btn-close-card:hover { color: #e74c3c; }
+
+        .card-body { padding: 15px; }
+        .batch-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .batch-table th, .batch-table td { padding: 6px; text-align: left; font-size: 0.85em; }
+        .batch-table th { background: #f8f9fa; color: #7f8c8d; }
+        
+        .batch-table input[type="number"] {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .batch-table input:focus { border-color: #3498db; outline: none; background: #f0f8ff; }
+
+        .btn-remove-row { background: none; border: none; color: #e74c3c; cursor: pointer; font-weight: bold; }
+        .card-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .btn-add-batch { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; }
+        .btn-add-batch:hover { background: #2980b9; }
+
+        .card-footer {
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        .btn-save-all { background: #27ae60; color: white; border: none; padding: 12px 25px; font-size: 1em; font-weight: bold; border-radius: 5px; cursor: pointer; }
+        .btn-save-all:hover { background: #219653; }
+
+        .empty-workspace-state { text-align: center; color: #7f8c8d; margin-top: 80px; }
+
+        /* Draft Recovered Banner */
+        .draft-banner {
+            background-color: #e8f8f5;
+            color: #117864;
+            border: 1px solid #a3e4d7;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+        }
+        .draft-banner button {
+            background: transparent;
+            border: none;
+            color: #117864;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOP NAVBAR -->
+<div class="top-bar">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <a href="/?date={{ current_date }}" class="nav-back">← Back to Table Sheet</a>
+        <h2>Poultry Shift Data Entry</h2>
+    </div>
+    <div class="top-controls">
+        <input type="date" id="entry-date" style="padding: 6px; border-radius: 4px; border: none;" value="{{ current_date }}" onchange="loadSavedEntries()">
+        
+        <div class="shift-toggle-container">
+            <button class="shift-btn active-day" id="btn-day" onclick="setShift('day')">☀️ Day Shift</button>
+            <button class="shift-btn" id="btn-night" onclick="setShift('night')">🌙 Night Shift</button>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <input type="text" id="product-search" class="search-box" placeholder="🔍 Search product..." onkeyup="filterProducts()">
+        <div class="product-list" id="product-list">
+            {% for product in products %}
+            <div class="product-item js-product-item" 
+                 data-id="{{ product.id }}" 
+                 data-code="{{ product.code }}" 
+                 data-name="{{ product.name }}">
+                <div><strong>{{ product.code }}</strong> - {{ product.name }}</div>
+                <span class="badge" id="badge-{{ product.id }}">✓ Logged</span>
+            </div>
+            {% else %}
+            <div style="text-align: center; color: #7f8c8d; margin-top: 20px;">No products found in database.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- MAIN WORKSPACE -->
+    <div class="workspace">
+        <div id="draft-banner" class="draft-banner">
+            <span>⚡ <strong>Draft Restored:</strong> Unsaved entries recovered from your previous browser session.</span>
+            <button onclick="dismissDraftBanner()">&times; Dismiss</button>
+        </div>
+
+        <div class="workspace-header">
+            <h3 id="current-shift-title" style="margin:0;">Active Mode: <span style="color: #f39c12;">Day Shift</span></h3>
+            <button class="btn-save-all" onclick="saveAllEntries()">💾 Save All Cards (Ctrl+Enter)</button>
+        </div>
+
+        <div id="empty-state" class="empty-workspace-state">
+            <h3>👈 Select a product from the left list to start entering batches</h3>
+            <p>Use <strong>Enter</strong> to navigate fields/rows and <strong>Arrow Keys</strong> to move between cards.</p>
+        </div>
+
+        <!-- CARDS CONTAINER -->
+        <div class="cards-grid" id="cards-container"></div>
+    </div>
+</div>
+
+<script>
+    let activeShift = 'day';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const productList = document.getElementById('product-list');
+
+        if (productList) {
+            productList.addEventListener('click', function(e) {
+                const item = e.target.closest('.js-product-item');
+                if (item) {
+                    const id = parseInt(item.dataset.id);
+                    const code = item.dataset.code;
+                    const name = item.dataset.name;
+
+                    openProductTab(id, code, name);
+                }
+            });
+        }
+
+        // Global Shortcut: Save on Ctrl+Enter
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                saveAllEntries();
+            }
+        });
+
+        // Warn user before closing tab if there is unsaved data
+        window.addEventListener('beforeunload', function(e) {
+            const draft = localStorage.getItem(getDraftKey());
+            if (draft) {
+                const parsed = JSON.parse(draft);
+                if (parsed.entries && parsed.entries.length > 0) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            }
+        });
+
+        loadSavedEntries();
+    });
+
+    // Helper: Dynamic Storage Key based on Date & Shift
+    function getDraftKey() {
+        const date = document.getElementById('entry-date')?.value || 'default-date';
+        return `batch_draft_${date}_${activeShift}`;
+    }
+
+    // Read full draft payload from LocalStorage
+    function getDraftObject() {
+        const savedDraft = localStorage.getItem(getDraftKey());
+        if (!savedDraft) {
+            return {
+                date: document.getElementById('entry-date')?.value || '',
+                shift: activeShift,
+                entries: []
+            };
+        }
+        try {
+            return JSON.parse(savedDraft);
+        } catch (e) {
+            return {
+                date: document.getElementById('entry-date')?.value || '',
+                shift: activeShift,
+                entries: []
+            };
+        }
+    }
+
+    // Save active open cards into LocalStorage without losing closed cards
+    function saveDraftToLocalStorage() {
+        const draftObj = getDraftObject();
+        draftObj.date = document.getElementById('entry-date')?.value || '';
+        draftObj.shift = activeShift;
+
+        // Map currently open cards
+        document.querySelectorAll('.product-card').forEach(card => {
+            const productId = parseInt(card.getAttribute('data-product-id'));
+            const batches = [];
+
+            card.querySelectorAll('.batch-row').forEach(row => {
+                const birds = row.querySelector('.birds-input').value;
+                const weight = row.querySelector('.weight-input').value;
+
+                if (birds !== '' || weight !== '') {
+                    batches.push({ birds, weight });
+                }
+            });
+
+            const existingIdx = draftObj.entries.findIndex(e => e.product_id === productId);
+            if (existingIdx > -1) {
+                draftObj.entries[existingIdx].batches = batches;
+            } else {
+                draftObj.entries.push({ product_id: productId, batches: batches });
+            }
+        });
+
+        // Clean up empty entries
+        draftObj.entries = draftObj.entries.filter(e => e.batches && e.batches.length > 0);
+
+        if (draftObj.entries.length > 0) {
+            localStorage.setItem(getDraftKey(), JSON.stringify(draftObj));
+        } else {
+            clearLocalDraft();
+        }
+    }
+
+    function restoreDraftFromLocalStorage() {
+        const savedDraft = localStorage.getItem(getDraftKey());
+        if (!savedDraft) return false;
+
+        try {
+            const draft = JSON.parse(savedDraft);
+            if (!draft.entries || draft.entries.length === 0) return false;
+
+            draft.entries.forEach(entry => {
+                const sidebarItem = document.querySelector(`.product-item[data-id="${entry.product_id}"]`);
+                if (sidebarItem) {
+                    const code = sidebarItem.dataset.code;
+                    const name = sidebarItem.dataset.name;
+                    openProductTab(entry.product_id, code, name, entry.batches);
+                }
+            });
+
+            document.getElementById('draft-banner').style.display = 'flex';
+            return true;
+        } catch (e) {
+            console.error("Failed to parse local draft:", e);
+            return false;
+        }
+    }
+
+    function clearLocalDraft() {
+        localStorage.removeItem(getDraftKey());
+    }
+
+    function dismissDraftBanner() {
+        document.getElementById('draft-banner').style.display = 'none';
+    }
+
+    function loadSavedEntries() {
+        const date = document.getElementById('entry-date').value;
+        
+        document.getElementById('cards-container').innerHTML = '';
+        document.querySelectorAll('.product-item').forEach(el => el.classList.remove('active-open'));
+        document.querySelectorAll('.badge').forEach(el => el.style.display = 'none');
+        document.getElementById('empty-state').style.display = 'block';
+        dismissDraftBanner();
+
+        const restored = restoreDraftFromLocalStorage();
+
+        if (!restored) {
+            fetch(`/api/get-saved-batches?date=${date}&shift=${activeShift}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && data.entries && data.entries.length > 0) {
+                        data.entries.forEach(entry => {
+                            const sidebarItem = document.querySelector(`.product-item[data-id="${entry.product_id}"]`);
+                            if (sidebarItem) {
+                                const code = sidebarItem.dataset.code;
+                                const name = sidebarItem.dataset.name;
+                                openProductTab(entry.product_id, code, name, entry.batches);
+                            }
+                        });
+                    }
+                })
+                .catch(err => console.error("Error loading previous data:", err));
+        }
+    }
+
+    function setShift(shift) {
+        activeShift = shift;
+        const btnDay = document.getElementById('btn-day');
+        const btnNight = document.getElementById('btn-night');
+        const shiftTitle = document.getElementById('current-shift-title');
+
+        if (shift === 'day') {
+            btnDay.className = 'shift-btn active-day';
+            btnNight.className = 'shift-btn';
+            shiftTitle.innerHTML = 'Active Mode: <span style="color: #f39c12;">Day Shift</span>';
+        } else {
+            btnDay.className = 'shift-btn';
+            btnNight.className = 'shift-btn active-night';
+            shiftTitle.innerHTML = 'Active Mode: <span style="color: #8e44ad;">Night Shift</span>';
+        }
+
+        loadSavedEntries();
+    }
+
+    function filterProducts() {
+        const query = document.getElementById('product-search').value.toLowerCase();
+        document.querySelectorAll('.product-item').forEach(item => {
+            const text = item.innerText.toLowerCase();
+            item.style.display = text.includes(query) ? 'flex' : 'none';
+        });
+    }
+
+    function openProductTab(productId, code, name, initialBatches = null) {
+        document.getElementById('empty-state').style.display = 'none';
+
+        if (document.getElementById(`card-${productId}`)) {
+            const existingCard = document.getElementById(`card-${productId}`);
+            existingCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            existingCard.querySelector('.birds-input').focus();
+            return;
+        }
+
+        // Look for stored draft data if initialBatches is null
+        if (!initialBatches) {
+            const draftObj = getDraftObject();
+            const storedEntry = draftObj.entries?.find(e => e.product_id === productId);
+            if (storedEntry && storedEntry.batches && storedEntry.batches.length > 0) {
+                initialBatches = storedEntry.batches;
+            }
+        }
+
+        const sidebarItem = document.querySelector(`.product-item[data-id="${productId}"]`);
+        if (sidebarItem) sidebarItem.classList.add('active-open');
+
+        const container = document.getElementById('cards-container');
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.id = `card-${productId}`;
+        card.setAttribute('data-product-id', productId);
+
+        card.innerHTML = `
+            <div class="card-header">
+                <h3><strong>${code}</strong> - ${name}</h3>
+                <button class="btn-close-card" onclick="closeProductCard(${productId})" title="Close Tab">&times;</button>
+            </div>
+            <div class="card-body">
+                <table class="batch-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">#</th>
+                            <th style="width: 40%;">Birds</th>
+                            <th style="width: 40%;">Weight (kg)</th>
+                            <th style="width: 5%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="batch-rows-${productId}">
+                    </tbody>
+                </table>
+                <div class="card-actions">
+                    <button class="btn-add-batch" onclick="addBatchRow(${productId})">+ Add Batch</button>
+                </div>
+            </div>
+            <div class="card-footer">
+                <span>Total Birds: <span id="total-birds-${productId}">0</span></span>
+                <span>Total Weight: <span id="total-weight-${productId}">0.00</span> kg</span>
+            </div>
+        `;
+
+        container.appendChild(card);
+
+        if (initialBatches && initialBatches.length > 0) {
+            initialBatches.forEach(b => addBatchRow(productId, b.birds, b.weight));
+        } else {
+            addBatchRow(productId);
+            addBatchRow(productId);
+        }
+
+        calculateCardTotals(productId);
+        saveDraftToLocalStorage();
+    }
+
+    function addBatchRow(productId, birdsVal = '', weightVal = '') {
+        const tbody = document.getElementById(`batch-rows-${productId}`);
+        const rowCount = tbody.children.length + 1;
+        
+        const tr = document.createElement('tr');
+        tr.className = 'batch-row';
+        tr.innerHTML = `
+            <td style="color: #7f8c8d;">${rowCount}</td>
+            <td><input type="number" min="0" class="birds-input" placeholder="0" value="${birdsVal}" oninput="onInputChanged(${productId})"></td>
+            <td><input type="number" min="0" step="0.01" class="weight-input" placeholder="0.00" value="${weightVal}" oninput="onInputChanged(${productId})"></td>
+            <td><button class="btn-remove-row" onclick="removeBatchRow(this, ${productId})">&times;</button></td>
+        `;
+
+        tbody.appendChild(tr);
+
+        const birdsInput = tr.querySelector('.birds-input');
+        const weightInput = tr.querySelector('.weight-input');
+
+        birdsInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                weightInput.focus();
+                weightInput.select();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const nextRow = tr.nextElementSibling;
+                if (nextRow) {
+                    const target = nextRow.querySelector('.birds-input');
+                    if (target) { target.focus(); target.select(); }
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prevRow = tr.previousElementSibling;
+                if (prevRow) {
+                    const target = prevRow.querySelector('.birds-input');
+                    if (target) { target.focus(); target.select(); }
+                }
+            } else if (e.key === 'ArrowRight' && e.target.selectionStart === e.target.value.length) {
+                e.preventDefault();
+                navigateCards(productId, 'next', 'birds');
+            } else if (e.key === 'ArrowLeft' && e.target.selectionStart === 0) {
+                e.preventDefault();
+                navigateCards(productId, 'prev', 'birds');
+            }
+        });
+
+        weightInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                let nextRow = tr.nextElementSibling;
+                if (!nextRow) {
+                    addBatchRow(productId);
+                    nextRow = tr.nextElementSibling;
+                }
+                const nextBirdsInput = nextRow.querySelector('.birds-input');
+                nextBirdsInput.focus();
+                nextBirdsInput.select();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const nextRow = tr.nextElementSibling;
+                if (nextRow) {
+                    const target = nextRow.querySelector('.weight-input');
+                    if (target) { target.focus(); target.select(); }
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prevRow = tr.previousElementSibling;
+                if (prevRow) {
+                    const target = prevRow.querySelector('.weight-input');
+                    if (target) { target.focus(); target.select(); }
+                }
+            } else if (e.key === 'ArrowRight' && e.target.selectionStart === e.target.value.length) {
+                e.preventDefault();
+                navigateCards(productId, 'next', 'weight');
+            } else if (e.key === 'ArrowLeft' && e.target.selectionStart === 0) {
+                e.preventDefault();
+                navigateCards(productId, 'prev', 'weight');
+            }
+        });
+
+        saveDraftToLocalStorage();
+    }
+
+    function onInputChanged(productId) {
+        calculateCardTotals(productId);
+        saveDraftToLocalStorage();
+    }
+
+    function navigateCards(currentProductId, direction, fieldType) {
+        const allCards = Array.from(document.querySelectorAll('.product-card'));
+        const currentIndex = allCards.findIndex(card => parseInt(card.getAttribute('data-product-id')) === currentProductId);
+
+        if (currentIndex === -1) return;
+
+        let targetCard = null;
+        if (direction === 'next' && currentIndex < allCards.length - 1) {
+            targetCard = allCards[currentIndex + 1];
+        } else if (direction === 'prev' && currentIndex > 0) {
+            targetCard = allCards[currentIndex - 1];
+        }
+
+        if (targetCard) {
+            const fieldClass = fieldType === 'weight' ? '.weight-input' : '.birds-input';
+            const targetInput = targetCard.querySelector(fieldClass) || targetCard.querySelector('.birds-input');
+            
+            if (targetInput) {
+                targetInput.focus();
+                targetInput.select();
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    }
+
+    function removeBatchRow(btn, productId) {
+        const tbody = btn.closest('tbody');
+        btn.closest('tr').remove();
+
+        Array.from(tbody.children).forEach((tr, index) => {
+            tr.cells[0].innerText = index + 1;
+        });
+
+        calculateCardTotals(productId);
+        saveDraftToLocalStorage();
+    }
+
+    function calculateCardTotals(productId) {
+        const card = document.getElementById(`card-${productId}`);
+        if (!card) return;
+
+        let totalBirds = 0;
+        let totalWeight = 0;
+
+        card.querySelectorAll('.batch-row').forEach(row => {
+            const birds = parseInt(row.querySelector('.birds-input').value) || 0;
+            const weight = parseFloat(row.querySelector('.weight-input').value) || 0;
+            totalBirds += birds;
+            totalWeight += weight;
+        });
+
+        document.getElementById(`total-birds-${productId}`).innerText = totalBirds;
+        document.getElementById(`total-weight-${productId}`).innerText = totalWeight.toFixed(2);
+
+        const badge = document.getElementById(`badge-${productId}`);
+        if (badge) {
+            badge.style.display = (totalBirds > 0 || totalWeight > 0) ? 'inline-block' : 'none';
+        }
+    }
+
+    // CLOSE CARD (Saves inputs first, then removes DOM card)
+    function closeProductCard(productId) {
+        const card = document.getElementById(`card-${productId}`);
+        if (card) {
+            saveDraftToLocalStorage();
+            card.remove();
+        }
+
+        const sidebarItem = document.querySelector(`.product-item[data-id="${productId}"]`);
+        if (sidebarItem) sidebarItem.classList.remove('active-open');
+
+        if (document.querySelectorAll('.product-card').length === 0) {
+            document.getElementById('empty-state').style.display = 'block';
+        }
+    }
+
+    // SAVE ALL CARDS DATA (Includes open and closed cards saved in LocalStorage draft)
+    function saveAllEntries() {
+        saveDraftToLocalStorage();
+        const draftObj = getDraftObject();
+
+        if (!draftObj.entries || draftObj.entries.length === 0) {
+            alert("No data entered in any card.");
+            return;
+        }
+
+        const payload = {
+            date: document.getElementById('entry-date').value,
+            shift: activeShift,
+            entries: draftObj.entries
+        };
+
+        fetch('/api/save-batches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(`Successfully saved ${payload.entries.length} product entry batch(es) for ${activeShift.toUpperCase()} shift!`);
+                clearLocalDraft();
+                loadSavedEntries();
+            } else {
+                alert("Error saving entries: " + data.message);
+            }
+        })
+        .catch(err => alert("Network error saving entries: " + err));
+    }
+</script>
+
+</body>
+</html>
