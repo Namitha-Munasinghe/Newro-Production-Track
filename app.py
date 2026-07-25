@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 app.secret_key = 'poultry_secret_key'
@@ -18,7 +18,7 @@ class Product(db.Model):
 
 class EntryLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    date = db.Column(db.Date, nullable=False, default=lambda: datetime.now(timezone.utc).date())
     shift = db.Column(db.String(10), nullable=False) # 'day' or 'night'
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     birds = db.Column(db.Integer, nullable=True)
@@ -103,7 +103,7 @@ with app.app_context():
 
 @app.route('/')
 def home():
-    selected_date_str = request.args.get('date') or datetime.utcnow().strftime('%Y-%m-%d')
+    selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
     entry_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
     
     products = Product.query.order_by(Product.code).all()
@@ -126,7 +126,7 @@ def home():
 
 @app.route('/entry')
 def batch_entry():
-    selected_date_str = request.args.get('date') or datetime.utcnow().strftime('%Y-%m-%d')
+    selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
     products = Product.query.order_by(Product.code).all()
     return render_template('batch_entry.html', products=products, current_date=selected_date_str)
 
@@ -138,7 +138,7 @@ def get_saved_batches():
     Retrieves all batch entries for a given date and shift from SQLite.
     Structures data by product ID for easy front-end parsing.
     """
-    selected_date_str = request.args.get('date') or datetime.utcnow().strftime('%Y-%m-%d')
+    selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
     shift = request.args.get('shift', 'day')
 
     try:
@@ -180,7 +180,6 @@ def save_batches():
     try:
         entry_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
 
-        # Overwrite previous logs for the products submitted in this shift batch
         for entry in entries:
             product_id = entry.get('product_id')
             batches = entry.get('batches', [])
@@ -189,15 +188,20 @@ def save_batches():
             EntryLog.query.filter_by(date=entry_date, shift=shift, product_id=product_id).delete()
 
             for b in batches:
-                birds = b.get('birds')
-                weight = b.get('weight')
-                if birds or weight:
+                raw_birds = b.get('birds')
+                raw_weight = b.get('weight')
+                
+                # Helper conversions to properly format data types or nulls
+                birds_val = int(raw_birds) if raw_birds not in (None, '', 'null') else None
+                weight_val = float(raw_weight) if raw_weight not in (None, '', 'null') else None
+
+                if birds_val is not None or weight_val is not None:
                     db.session.add(EntryLog(
                         date=entry_date,
                         shift=shift,
                         product_id=product_id,
-                        birds=birds if birds else None,
-                        weight=weight if weight else None
+                        birds=birds_val,
+                        weight=weight_val
                     ))
 
         db.session.commit()
@@ -262,7 +266,7 @@ def delete_product(id):
 
 @app.route('/summary', methods=['GET', 'POST'])
 def summary():
-    selected_date = request.args.get('date') or request.form.get('date') or datetime.today().strftime('%Y-%m-%d')
+    selected_date = request.args.get('date') or request.form.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
     query_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
 
     if request.method == 'POST':

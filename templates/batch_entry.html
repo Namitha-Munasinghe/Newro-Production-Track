@@ -10,8 +10,8 @@
         
         /* Top Navigation Bar */
         .top-bar {
-            background-color: #2c3e50;
-            color: white;
+            background-color: white;
+            color: #2c3e50;
             padding: 12px 25px;
             display: flex;
             justify-content: space-between;
@@ -141,7 +141,7 @@
         .batch-table th, .batch-table td { padding: 6px; text-align: left; font-size: 0.85em; }
         .batch-table th { background: #f8f9fa; color: #7f8c8d; }
         
-        .batch-table input[type="number"] {
+        .batch-table input[type="text"], .batch-table input[type="number"] {
             width: 100%;
             padding: 6px;
             border: 1px solid #bdc3c7;
@@ -160,35 +160,45 @@
             border-top: 1px solid #eee;
             padding: 10px 15px;
             display: flex;
-            justify-content: space-between;
-            font-weight: bold;
+            flex-direction: column;
+            gap: 8px;
             font-size: 0.85em;
         }
+        .card-totals {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+        .card-footer-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .btn-card-save {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-card-save:hover { background: #219653; }
+        .btn-card-cancel {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-card-cancel:hover { background: #c0392b; }
+
         .btn-save-all { background: #27ae60; color: white; border: none; padding: 12px 25px; font-size: 1em; font-weight: bold; border-radius: 5px; cursor: pointer; }
         .btn-save-all:hover { background: #219653; }
 
         .empty-workspace-state { text-align: center; color: #7f8c8d; margin-top: 80px; }
-
-        /* Draft Recovered Banner */
-        .draft-banner {
-            background-color: #e8f8f5;
-            color: #117864;
-            border: 1px solid #a3e4d7;
-            padding: 10px 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            display: none;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9em;
-        }
-        .draft-banner button {
-            background: transparent;
-            border: none;
-            color: #117864;
-            font-weight: bold;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
@@ -230,19 +240,14 @@
 
     <!-- MAIN WORKSPACE -->
     <div class="workspace">
-        <div id="draft-banner" class="draft-banner">
-            <span>⚡ <strong>Draft Restored:</strong> Unsaved entries recovered from your previous browser session.</span>
-            <button onclick="dismissDraftBanner()">&times; Dismiss</button>
-        </div>
-
         <div class="workspace-header">
             <h3 id="current-shift-title" style="margin:0;">Active Mode: <span style="color: #f39c12;">Day Shift</span></h3>
-            <button class="btn-save-all" onclick="saveAllEntries()">💾 Save All Cards (Ctrl+Enter)</button>
+            <button class="btn-save-all" onclick="saveAllEntries()">💾 Save All Open Cards (Ctrl+Enter)</button>
         </div>
 
         <div id="empty-state" class="empty-workspace-state">
             <h3>👈 Select a product from the left list to start entering batches</h3>
-            <p>Use <strong>Enter</strong> to navigate fields/rows and <strong>Arrow Keys</strong> to move between cards.</p>
+            <p>Use <strong>Enter/Arrows</strong> to navigate fields and <strong>Left/Right Arrows</strong> to jump between cards.</p>
         </div>
 
         <!-- CARDS CONTAINER -->
@@ -252,6 +257,7 @@
 
 <script>
     let activeShift = 'day';
+    let savedEntriesMap = {};
 
     document.addEventListener('DOMContentLoaded', function() {
         const productList = document.getElementById('product-list');
@@ -269,7 +275,6 @@
             });
         }
 
-        // Global Shortcut: Save on Ctrl+Enter
         document.addEventListener('keydown', function(e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
@@ -277,118 +282,8 @@
             }
         });
 
-        // Warn user before closing tab if there is unsaved data
-        window.addEventListener('beforeunload', function(e) {
-            const draft = localStorage.getItem(getDraftKey());
-            if (draft) {
-                const parsed = JSON.parse(draft);
-                if (parsed.entries && parsed.entries.length > 0) {
-                    e.preventDefault();
-                    e.returnValue = '';
-                }
-            }
-        });
-
         loadSavedEntries();
     });
-
-    // Helper: Dynamic Storage Key based on Date & Shift
-    function getDraftKey() {
-        const date = document.getElementById('entry-date')?.value || 'default-date';
-        return `batch_draft_${date}_${activeShift}`;
-    }
-
-    // Read full draft payload from LocalStorage
-    function getDraftObject() {
-        const savedDraft = localStorage.getItem(getDraftKey());
-        if (!savedDraft) {
-            return {
-                date: document.getElementById('entry-date')?.value || '',
-                shift: activeShift,
-                entries: []
-            };
-        }
-        try {
-            return JSON.parse(savedDraft);
-        } catch (e) {
-            return {
-                date: document.getElementById('entry-date')?.value || '',
-                shift: activeShift,
-                entries: []
-            };
-        }
-    }
-
-    // Save active open cards into LocalStorage without losing closed cards
-    function saveDraftToLocalStorage() {
-        const draftObj = getDraftObject();
-        draftObj.date = document.getElementById('entry-date')?.value || '';
-        draftObj.shift = activeShift;
-
-        // Map currently open cards
-        document.querySelectorAll('.product-card').forEach(card => {
-            const productId = parseInt(card.getAttribute('data-product-id'));
-            const batches = [];
-
-            card.querySelectorAll('.batch-row').forEach(row => {
-                const birds = row.querySelector('.birds-input').value;
-                const weight = row.querySelector('.weight-input').value;
-
-                if (birds !== '' || weight !== '') {
-                    batches.push({ birds, weight });
-                }
-            });
-
-            const existingIdx = draftObj.entries.findIndex(e => e.product_id === productId);
-            if (existingIdx > -1) {
-                draftObj.entries[existingIdx].batches = batches;
-            } else {
-                draftObj.entries.push({ product_id: productId, batches: batches });
-            }
-        });
-
-        // Clean up empty entries
-        draftObj.entries = draftObj.entries.filter(e => e.batches && e.batches.length > 0);
-
-        if (draftObj.entries.length > 0) {
-            localStorage.setItem(getDraftKey(), JSON.stringify(draftObj));
-        } else {
-            clearLocalDraft();
-        }
-    }
-
-    function restoreDraftFromLocalStorage() {
-        const savedDraft = localStorage.getItem(getDraftKey());
-        if (!savedDraft) return false;
-
-        try {
-            const draft = JSON.parse(savedDraft);
-            if (!draft.entries || draft.entries.length === 0) return false;
-
-            draft.entries.forEach(entry => {
-                const sidebarItem = document.querySelector(`.product-item[data-id="${entry.product_id}"]`);
-                if (sidebarItem) {
-                    const code = sidebarItem.dataset.code;
-                    const name = sidebarItem.dataset.name;
-                    openProductTab(entry.product_id, code, name, entry.batches);
-                }
-            });
-
-            document.getElementById('draft-banner').style.display = 'flex';
-            return true;
-        } catch (e) {
-            console.error("Failed to parse local draft:", e);
-            return false;
-        }
-    }
-
-    function clearLocalDraft() {
-        localStorage.removeItem(getDraftKey());
-    }
-
-    function dismissDraftBanner() {
-        document.getElementById('draft-banner').style.display = 'none';
-    }
 
     function loadSavedEntries() {
         const date = document.getElementById('entry-date').value;
@@ -397,27 +292,29 @@
         document.querySelectorAll('.product-item').forEach(el => el.classList.remove('active-open'));
         document.querySelectorAll('.badge').forEach(el => el.style.display = 'none');
         document.getElementById('empty-state').style.display = 'block';
-        dismissDraftBanner();
 
-        const restored = restoreDraftFromLocalStorage();
+        savedEntriesMap = {};
 
-        if (!restored) {
-            fetch(`/api/get-saved-batches?date=${date}&shift=${activeShift}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success' && data.entries && data.entries.length > 0) {
-                        data.entries.forEach(entry => {
-                            const sidebarItem = document.querySelector(`.product-item[data-id="${entry.product_id}"]`);
-                            if (sidebarItem) {
-                                const code = sidebarItem.dataset.code;
-                                const name = sidebarItem.dataset.name;
-                                openProductTab(entry.product_id, code, name, entry.batches);
-                            }
-                        });
-                    }
-                })
-                .catch(err => console.error("Error loading previous data:", err));
-        }
+        fetch(`/api/get-saved-batches?date=${date}&shift=${activeShift}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && data.entries && data.entries.length > 0) {
+                    data.entries.forEach(entry => {
+                        savedEntriesMap[entry.product_id] = entry.batches;
+                        
+                        const badge = document.getElementById(`badge-${entry.product_id}`);
+                        if (badge) badge.style.display = 'inline-block';
+
+                        const sidebarItem = document.querySelector(`.product-item[data-id="${entry.product_id}"]`);
+                        if (sidebarItem) {
+                            const code = sidebarItem.dataset.code;
+                            const name = sidebarItem.dataset.name;
+                            openProductTab(entry.product_id, code, name, entry.batches);
+                        }
+                    });
+                }
+            })
+            .catch(err => console.error("Error loading saved data:", err));
     }
 
     function setShift(shift) {
@@ -453,17 +350,12 @@
         if (document.getElementById(`card-${productId}`)) {
             const existingCard = document.getElementById(`card-${productId}`);
             existingCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            existingCard.querySelector('.birds-input').focus();
+            existingCard.querySelector('.birds-input')?.focus();
             return;
         }
 
-        // Look for stored draft data if initialBatches is null
-        if (!initialBatches) {
-            const draftObj = getDraftObject();
-            const storedEntry = draftObj.entries?.find(e => e.product_id === productId);
-            if (storedEntry && storedEntry.batches && storedEntry.batches.length > 0) {
-                initialBatches = storedEntry.batches;
-            }
+        if (!initialBatches && savedEntriesMap[productId]) {
+            initialBatches = savedEntriesMap[productId];
         }
 
         const sidebarItem = document.querySelector(`.product-item[data-id="${productId}"]`);
@@ -478,7 +370,7 @@
         card.innerHTML = `
             <div class="card-header">
                 <h3><strong>${code}</strong> - ${name}</h3>
-                <button class="btn-close-card" onclick="closeProductCard(${productId})" title="Close Tab">&times;</button>
+                <button class="btn-close-card" onclick="closeProductCard(${productId})" title="Close card">&times;</button>
             </div>
             <div class="card-body">
                 <table class="batch-table">
@@ -498,8 +390,14 @@
                 </div>
             </div>
             <div class="card-footer">
-                <span>Total Birds: <span id="total-birds-${productId}">0</span></span>
-                <span>Total Weight: <span id="total-weight-${productId}">0.00</span> kg</span>
+                <div class="card-totals">
+                    <span>Total Birds: <span id="total-birds-${productId}">0</span></span>
+                    <span>Total Weight: <span id="total-weight-${productId}">0.00</span> kg</span>
+                </div>
+                <div class="card-footer-actions">
+                    <button class="btn-card-cancel" onclick="closeProductCard(${productId})">Close</button>
+                    <button class="btn-card-save" onclick="saveSingleCard(${productId})">Save Card</button>
+                </div>
             </div>
         `;
 
@@ -513,7 +411,6 @@
         }
 
         calculateCardTotals(productId);
-        saveDraftToLocalStorage();
     }
 
     function addBatchRow(productId, birdsVal = '', weightVal = '') {
@@ -524,8 +421,8 @@
         tr.className = 'batch-row';
         tr.innerHTML = `
             <td style="color: #7f8c8d;">${rowCount}</td>
-            <td><input type="number" min="0" class="birds-input" placeholder="0" value="${birdsVal}" oninput="onInputChanged(${productId})"></td>
-            <td><input type="number" min="0" step="0.01" class="weight-input" placeholder="0.00" value="${weightVal}" oninput="onInputChanged(${productId})"></td>
+            <td><input type="number" min="0" class="birds-input" placeholder="0" value="${birdsVal}" oninput="calculateCardTotals(${productId})"></td>
+            <td><input type="number" min="0" step="0.01" class="weight-input" placeholder="0.00" value="${weightVal}" oninput="calculateCardTotals(${productId})"></td>
             <td><button class="btn-remove-row" onclick="removeBatchRow(this, ${productId})">&times;</button></td>
         `;
 
@@ -535,76 +432,84 @@
         const weightInput = tr.querySelector('.weight-input');
 
         birdsInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                weightInput.focus();
-                weightInput.select();
-            } else if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                const nextRow = tr.nextElementSibling;
-                if (nextRow) {
-                    const target = nextRow.querySelector('.birds-input');
-                    if (target) { target.focus(); target.select(); }
-                }
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                const prevRow = tr.previousElementSibling;
-                if (prevRow) {
-                    const target = prevRow.querySelector('.birds-input');
-                    if (target) { target.focus(); target.select(); }
-                }
-            } else if (e.key === 'ArrowRight' && e.target.selectionStart === e.target.value.length) {
-                e.preventDefault();
-                navigateCards(productId, 'next', 'birds');
-            } else if (e.key === 'ArrowLeft' && e.target.selectionStart === 0) {
-                e.preventDefault();
-                navigateCards(productId, 'prev', 'birds');
-            }
+            handleInputKeydown(e, productId, tr, 'birds');
         });
 
         weightInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
+            handleInputKeydown(e, productId, tr, 'weight');
+        });
+    }
+
+    // Unified Input Navigation Logic
+    function handleInputKeydown(e, productId, tr, fieldType) {
+        const key = e.key;
+
+        // Enter Key Navigation
+        if (key === 'Enter') {
+            e.preventDefault();
+            if (fieldType === 'birds') {
+                const weightInput = tr.querySelector('.weight-input');
+                if (weightInput) focusAndSelect(weightInput);
+            } else {
                 let nextRow = tr.nextElementSibling;
                 if (!nextRow) {
                     addBatchRow(productId);
                     nextRow = tr.nextElementSibling;
                 }
-                const nextBirdsInput = nextRow.querySelector('.birds-input');
-                nextBirdsInput.focus();
-                nextBirdsInput.select();
-            } else if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                const nextRow = tr.nextElementSibling;
                 if (nextRow) {
-                    const target = nextRow.querySelector('.weight-input');
-                    if (target) { target.focus(); target.select(); }
+                    const nextBirdsInput = nextRow.querySelector('.birds-input');
+                    if (nextBirdsInput) focusAndSelect(nextBirdsInput);
                 }
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                const prevRow = tr.previousElementSibling;
-                if (prevRow) {
-                    const target = prevRow.querySelector('.weight-input');
-                    if (target) { target.focus(); target.select(); }
-                }
-            } else if (e.key === 'ArrowRight' && e.target.selectionStart === e.target.value.length) {
-                e.preventDefault();
-                navigateCards(productId, 'next', 'weight');
-            } else if (e.key === 'ArrowLeft' && e.target.selectionStart === 0) {
-                e.preventDefault();
-                navigateCards(productId, 'prev', 'weight');
             }
-        });
+            return;
+        }
 
-        saveDraftToLocalStorage();
+        // Vertical Navigation (ArrowUp / ArrowDown)
+        if (key === 'ArrowDown') {
+            e.preventDefault();
+            const nextRow = tr.nextElementSibling;
+            if (nextRow) {
+                const target = nextRow.querySelector(`.${fieldType}-input`);
+                if (target) focusAndSelect(target);
+            }
+            return;
+        }
+
+        if (key === 'ArrowUp') {
+            e.preventDefault();
+            const prevRow = tr.previousElementSibling;
+            if (prevRow) {
+                const target = prevRow.querySelector(`.${fieldType}-input`);
+                if (target) focusAndSelect(target);
+            }
+            return;
+        }
+
+        // Horizontal Card Navigation (Right / Left Arrow keys)
+        if (key === 'ArrowRight') {
+            // Trigger jump to NEXT card when pressing Right Arrow on Weight input OR when holding Ctrl
+            if (fieldType === 'weight' || e.ctrlKey || e.altKey) {
+                e.preventDefault();
+                const rowIndex = Array.from(tr.parentElement.children).indexOf(tr);
+                // ALWAYS target 'birds' field in the next card
+                navigateCards(productId, 'next', 'birds', rowIndex);
+            }
+            return;
+        }
+
+        if (key === 'ArrowLeft') {
+            // Trigger jump to PREVIOUS card when pressing Left Arrow on Birds input OR when holding Ctrl
+            if (fieldType === 'birds' || e.ctrlKey || e.altKey) {
+                e.preventDefault();
+                const rowIndex = Array.from(tr.parentElement.children).indexOf(tr);
+                // Target 'weight' field when going backward
+                navigateCards(productId, 'prev', 'weight', rowIndex);
+            }
+            return;
+        }
     }
 
-    function onInputChanged(productId) {
-        calculateCardTotals(productId);
-        saveDraftToLocalStorage();
-    }
-
-    function navigateCards(currentProductId, direction, fieldType) {
+    function navigateCards(currentProductId, direction, targetFieldType, rowIndex = 0) {
         const allCards = Array.from(document.querySelectorAll('.product-card'));
         const currentIndex = allCards.findIndex(card => parseInt(card.getAttribute('data-product-id')) === currentProductId);
 
@@ -618,15 +523,22 @@
         }
 
         if (targetCard) {
-            const fieldClass = fieldType === 'weight' ? '.weight-input' : '.birds-input';
-            const targetInput = targetCard.querySelector(fieldClass) || targetCard.querySelector('.birds-input');
+            const rows = targetCard.querySelectorAll('.batch-row');
+            const targetRow = rows[rowIndex] || rows[rows.length - 1];
             
-            if (targetInput) {
-                targetInput.focus();
-                targetInput.select();
-                targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (targetRow) {
+                const targetInput = targetRow.querySelector(`.${targetFieldType}-input`);
+                if (targetInput) {
+                    focusAndSelect(targetInput);
+                    targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                }
             }
         }
+    }
+
+    function focusAndSelect(input) {
+        input.focus();
+        setTimeout(() => input.select(), 0);
     }
 
     function removeBatchRow(btn, productId) {
@@ -638,7 +550,6 @@
         });
 
         calculateCardTotals(productId);
-        saveDraftToLocalStorage();
     }
 
     function calculateCardTotals(productId) {
@@ -657,18 +568,27 @@
 
         document.getElementById(`total-birds-${productId}`).innerText = totalBirds;
         document.getElementById(`total-weight-${productId}`).innerText = totalWeight.toFixed(2);
-
-        const badge = document.getElementById(`badge-${productId}`);
-        if (badge) {
-            badge.style.display = (totalBirds > 0 || totalWeight > 0) ? 'inline-block' : 'none';
-        }
     }
 
-    // CLOSE CARD (Saves inputs first, then removes DOM card)
+    function getCardBatches(productId) {
+        const card = document.getElementById(`card-${productId}`);
+        if (!card) return [];
+
+        const batches = [];
+        card.querySelectorAll('.batch-row').forEach(row => {
+            const birds = row.querySelector('.birds-input').value;
+            const weight = row.querySelector('.weight-input').value;
+
+            if ((birds !== '' && parseInt(birds) > 0) || (weight !== '' && parseFloat(weight) > 0)) {
+                batches.push({ birds, weight });
+            }
+        });
+        return batches;
+    }
+
     function closeProductCard(productId) {
         const card = document.getElementById(`card-${productId}`);
         if (card) {
-            saveDraftToLocalStorage();
             card.remove();
         }
 
@@ -680,20 +600,20 @@
         }
     }
 
-    // SAVE ALL CARDS DATA (Includes open and closed cards saved in LocalStorage draft)
-    function saveAllEntries() {
-        saveDraftToLocalStorage();
-        const draftObj = getDraftObject();
+    function handleProductDeletion(productId) {
+        delete savedEntriesMap[productId];
+        const badge = document.getElementById(`badge-${productId}`);
+        if (badge) badge.style.display = 'none';
+        closeProductCard(productId);
+    }
 
-        if (!draftObj.entries || draftObj.entries.length === 0) {
-            alert("No data entered in any card.");
-            return;
-        }
+    function saveSingleCard(productId) {
+        const batches = getCardBatches(productId);
 
         const payload = {
             date: document.getElementById('entry-date').value,
             shift: activeShift,
-            entries: draftObj.entries
+            entries: [{ product_id: productId, batches: batches }]
         };
 
         fetch('/api/save-batches', {
@@ -704,9 +624,68 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                alert(`Successfully saved ${payload.entries.length} product entry batch(es) for ${activeShift.toUpperCase()} shift!`);
-                clearLocalDraft();
-                loadSavedEntries();
+                if (batches.length > 0) {
+                    savedEntriesMap[productId] = batches;
+                    const badge = document.getElementById(`badge-${productId}`);
+                    if (badge) badge.style.display = 'inline-block';
+                    alert("Card saved successfully!");
+                } else {
+                    handleProductDeletion(productId);
+                    alert("Card had no remaining rows. Entry was deleted successfully.");
+                }
+            } else {
+                alert("Error updating entry: " + data.message);
+            }
+        })
+        .catch(err => alert("Network error saving entry: " + err));
+    }
+
+    function saveAllEntries() {
+        const openCards = document.querySelectorAll('.product-card');
+
+        if (openCards.length === 0) {
+            alert("No open cards to save.");
+            return;
+        }
+
+        const entriesPayload = [];
+
+        openCards.forEach(card => {
+            const productId = parseInt(card.getAttribute('data-product-id'));
+            const batches = getCardBatches(productId);
+
+            if (batches.length > 0) {
+                entriesPayload.push({ product_id: productId, batches: batches });
+            } else {
+                entriesPayload.push({ product_id: productId, batches: [] });
+            }
+        });
+
+        const payload = {
+            date: document.getElementById('entry-date').value,
+            shift: activeShift,
+            entries: entriesPayload
+        };
+
+        fetch('/api/save-batches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                entriesPayload.forEach(item => {
+                    if (item.batches.length > 0) {
+                        savedEntriesMap[item.product_id] = item.batches;
+                        const badge = document.getElementById(`badge-${item.product_id}`);
+                        if (badge) badge.style.display = 'inline-block';
+                    } else {
+                        handleProductDeletion(item.product_id);
+                    }
+                });
+
+                alert("All open cards updated successfully!");
             } else {
                 alert("Error saving entries: " + data.message);
             }
