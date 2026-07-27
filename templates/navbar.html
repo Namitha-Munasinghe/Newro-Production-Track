@@ -1,0 +1,95 @@
+<!-- navbar.html -->
+<style>
+    .app-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: var(--header-bg, #ecf0f1);
+        border: 1px solid var(--border-color, #d5dbdb);
+        border-radius: 6px;
+        padding: 10px 20px;
+        margin-bottom: 20px;
+    }
+
+    .app-navbar .brand-title {
+        font-size: 1.25em;
+        font-weight: bold;
+        color: var(--text-color, #2c3e50);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .app-navbar .nav-links {
+        display: flex;
+        gap: 10px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        flex-wrap: wrap;
+    }
+
+    .app-navbar .nav-link {
+        text-decoration: none;
+        color: var(--text-color, #2c3e50);
+        padding: 8px 14px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.9em;
+        transition: background-color 0.2s, color 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .app-navbar .nav-link:hover {
+        background-color: var(--border-color,#2980b9);
+    }
+
+    .app-navbar .nav-link.active {
+        background-color: #2980b9;
+        color: #ffffff !important;
+        border-color: #2471a3;
+    }
+
+    body.dark-mode .app-navbar .nav-link.active {
+        background-color: #1f4068;
+        color: #ffffff !important;
+        border-color: #0f3460;
+    }
+
+    @media (max-width: 850px) {
+        .app-navbar {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .app-navbar .nav-links {
+            width: 100%;
+        }
+    }
+</style>
+
+<nav class="app-navbar">
+    <h2 class="brand-title">
+        🐔 {{ page_title if page_title else 'Poultry Production Manager' }}
+    </h2>
+    
+    <ul class="nav-links">
+        <li>
+            <a href="/" class="nav-link {{ 'active' if current_page == 'entry' else '' }}">
+                Product sheet
+            </a>
+        </li>
+        <li>
+            <a href="/entry" class="nav-link {{ 'active' if current_page == 'entry' else '' }}">
+                Data Entry
+            </a>
+        </li>
+        <li>
+            <a href="/products" class="nav-link {{ 'active' if current_page == 'products' else '' }}">
+                Add Product
+            </a>
+        </li>
+       
+    </ul>
+</nav>

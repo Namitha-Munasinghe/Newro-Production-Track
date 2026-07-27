@@ -5,7 +5,7 @@
     <title>Poultry Log Sheet</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f7; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
         /* HEADER & NAVIGATION STYLING */
         .header-top {
@@ -116,15 +116,9 @@
 <body>
 
 <div class="container">
-    <!-- TOP HEADER & NAV GROUP -->
-    <div class="header-top">
-        <h2>Poultry Shift Production Sheet</h2>
-        <div class="top-nav">
-            <a href="/entry?date={{ current_date }}" class="btn-enter-data-top">✍️ Enter Data</a>
-            <a href="/products" class="nav-link">Go to Product Manager →</a>
-        </div>
-    </div>
-    <hr>
+    {% set current_page = 'home' %}
+    {% set page_title = 'Poultry Shift Production Sheet' %}
+    {% include "navbar.html" %}
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}

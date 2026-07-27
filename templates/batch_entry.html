@@ -6,23 +6,63 @@
     <title>Multi-Tab Batch Entry System</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f7; color: #2c3e50; }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f7; color: #2c3e50; }
         
-        /* Top Navigation Bar */
-        .top-bar {
-            background-color: white;
-            color: #2c3e50;
-            padding: 12px 25px;
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        /* SHARED HEADER & NAVIGATION STYLING */
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
         }
-        .top-bar h2 { margin: 0; font-size: 1.2em; }
-        .top-controls { display: flex; gap: 20px; align-items: center; }
-        .nav-back { color: #3498db; text-decoration: none; font-weight: bold; font-size: 0.9em; background: #ffffff; padding: 6px 12px; border-radius: 4px; }
-        .nav-back:hover { background: #ecf0f1; }
+        .header-top h2 { margin: 0; color: #2c3e50; }
         
+        .top-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-link { 
+            background: #3498db; 
+            color: white; 
+            padding: 8px 15px; 
+            text-decoration: none; 
+            border-radius: 4px; 
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: background 0.2s ease;
+            display: inline-block;
+        }
+        .nav-link:hover { background: #2980b9; }
+
+        .btn-enter-data-top { 
+            background-color: #27ae60; 
+            color: white; 
+            padding: 8px 15px; 
+            text-decoration: none; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            font-size: 0.9em;
+            transition: background 0.2s ease;
+            display: inline-block;
+        }
+        .btn-enter-data-top:hover { background-color: #219653; }
+        
+        /* PAGE CONTROLS BAR (DATE & SHIFT TOGGLE) */
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ecf0f1;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .controls-right { display: flex; gap: 20px; align-items: center; }
+
         /* Shift Toggle Control */
         .shift-toggle-container {
             display: flex;
@@ -46,8 +86,11 @@
         /* Main Workspace Layout */
         .dashboard-container {
             display: flex;
-            height: calc(100vh - 60px);
+            height: calc(100vh - 220px);
+            min-height: 500px;
             overflow: hidden;
+            border: 1px solid #dcdde1;
+            border-radius: 6px;
         }
 
         /* Left Sidebar */
@@ -203,55 +246,58 @@
 </head>
 <body>
 
-<!-- TOP NAVBAR -->
-<div class="top-bar">
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <a href="/?date={{ current_date }}" class="nav-back">← Back to Table Sheet</a>
-        <h2>Poultry Shift Data Entry</h2>
-    </div>
-    <div class="top-controls">
-        <input type="date" id="entry-date" style="padding: 6px; border-radius: 4px; border: none;" value="{{ current_date }}" onchange="loadSavedEntries()">
+<div class="container">
+    {% set current_page = 'entry' %}
+    {% set page_title = 'Poultry Shift Data Entry' %}
+    {% include "navbar.html" %}
+
+    <!-- CONTROLS BAR (DATE & SHIFT) -->
+    <div class="controls-bar">
+        <div>
+            <label for="entry-date"><strong>ENTRY DATE:</strong> </label>
+            <input type="date" id="entry-date" style="padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.95em;" value="{{ current_date }}" onchange="loadSavedEntries()">
+        </div>
         
         <div class="shift-toggle-container">
             <button class="shift-btn active-day" id="btn-day" onclick="setShift('day')">☀️ Day Shift</button>
             <button class="shift-btn" id="btn-night" onclick="setShift('night')">🌙 Night Shift</button>
         </div>
     </div>
-</div>
 
-<div class="dashboard-container">
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <input type="text" id="product-search" class="search-box" placeholder="🔍 Search product..." onkeyup="filterProducts()">
-        <div class="product-list" id="product-list">
-            {% for product in products %}
-            <div class="product-item js-product-item" 
-                 data-id="{{ product.id }}" 
-                 data-code="{{ product.code }}" 
-                 data-name="{{ product.name }}">
-                <div><strong>{{ product.code }}</strong> - {{ product.name }}</div>
-                <span class="badge" id="badge-{{ product.id }}">✓ Logged</span>
+    <div class="dashboard-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <input type="text" id="product-search" class="search-box" placeholder="🔍 Search product..." onkeyup="filterProducts()">
+            <div class="product-list" id="product-list">
+                {% for product in products %}
+                <div class="product-item js-product-item" 
+                     data-id="{{ product.id }}" 
+                     data-code="{{ product.code }}" 
+                     data-name="{{ product.name }}">
+                    <div><strong>{{ product.code }}</strong> - {{ product.name }}</div>
+                    <span class="badge" id="badge-{{ product.id }}">✓ Logged</span>
+                </div>
+                {% else %}
+                <div style="text-align: center; color: #7f8c8d; margin-top: 20px;">No products found in database.</div>
+                {% endfor %}
             </div>
-            {% else %}
-            <div style="text-align: center; color: #7f8c8d; margin-top: 20px;">No products found in database.</div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- MAIN WORKSPACE -->
-    <div class="workspace">
-        <div class="workspace-header">
-            <h3 id="current-shift-title" style="margin:0;">Active Mode: <span style="color: #f39c12;">Day Shift</span></h3>
-            <button class="btn-save-all" onclick="saveAllEntries()">💾 Save All Open Cards (Ctrl+Enter)</button>
         </div>
 
-        <div id="empty-state" class="empty-workspace-state">
-            <h3>👈 Select a product from the left list to start entering batches</h3>
-            <p>Use <strong>Enter/Arrows</strong> to navigate fields and <strong>Left/Right Arrows</strong> to jump between cards.</p>
-        </div>
+        <!-- MAIN WORKSPACE -->
+        <div class="workspace">
+            <div class="workspace-header">
+                <h3 id="current-shift-title" style="margin:0;">Active Mode: <span style="color: #f39c12;">Day Shift</span></h3>
+                <button class="btn-save-all" onclick="saveAllEntries()">💾 Save All Open Cards (Ctrl+Enter)</button>
+            </div>
 
-        <!-- CARDS CONTAINER -->
-        <div class="cards-grid" id="cards-container"></div>
+            <div id="empty-state" class="empty-workspace-state">
+                <h3>👈 Select a product from the left list to start entering batches</h3>
+                <p>Use <strong>Enter/Arrows</strong> to navigate fields and <strong>Left/Right Arrows</strong> to jump between cards.</p>
+            </div>
+
+            <!-- CARDS CONTAINER -->
+            <div class="cards-grid" id="cards-container"></div>
+        </div>
     </div>
 </div>
 
@@ -487,22 +533,18 @@
 
         // Horizontal Card Navigation (Right / Left Arrow keys)
         if (key === 'ArrowRight') {
-            // Trigger jump to NEXT card when pressing Right Arrow on Weight input OR when holding Ctrl
             if (fieldType === 'weight' || e.ctrlKey || e.altKey) {
                 e.preventDefault();
                 const rowIndex = Array.from(tr.parentElement.children).indexOf(tr);
-                // ALWAYS target 'birds' field in the next card
                 navigateCards(productId, 'next', 'birds', rowIndex);
             }
             return;
         }
 
         if (key === 'ArrowLeft') {
-            // Trigger jump to PREVIOUS card when pressing Left Arrow on Birds input OR when holding Ctrl
             if (fieldType === 'birds' || e.ctrlKey || e.altKey) {
                 e.preventDefault();
                 const rowIndex = Array.from(tr.parentElement.children).indexOf(tr);
-                // Target 'weight' field when going backward
                 navigateCards(productId, 'prev', 'weight', rowIndex);
             }
             return;
@@ -696,8 +738,3 @@
 
 </body>
 </html>
-
-
-<!-- add an edit button for the previous day data entry -->
- <!-- add a top navigation bar  -->
-  summary page 

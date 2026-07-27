@@ -34,6 +34,8 @@
             --muted-text: #a0aec0;
         }
 
+        * { box-sizing: border-box; }
+
         body { 
             font-family: Arial, sans-serif; 
             margin: 20px; 
@@ -43,22 +45,12 @@
         }
 
         .container { 
-            max-width: 1200px; 
+            max-width: 1400px; 
             margin: 0 auto; 
             background: var(--container-bg); 
             padding: 25px; 
             border-radius: 8px; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-        }
-
-        .nav-link { 
-            float: right; 
-            background: #3498db; 
-            color: white; 
-            padding: 8px 15px; 
-            text-decoration: none; 
-            border-radius: 4px; 
-            margin-left: 10px; 
         }
 
         .theme-toggle-btn {
@@ -148,6 +140,7 @@
             width: 100%; 
             margin-top: 10px; 
         }
+        .btn-calc:hover { background-color: #2471a3; }
 
         .action-row {
             display: flex;
@@ -166,6 +159,7 @@
             font-size: 1.1em; 
             font-weight: bold; 
         }
+        .btn-save:hover { background-color: #219653; }
 
         .btn-delete { 
             flex: 1;
@@ -178,6 +172,7 @@
             font-size: 1.1em; 
             font-weight: bold; 
         }
+        .btn-delete:hover { background-color: #a93226; }
 
         .alert { padding: 10px; background-color: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 15px; }
         body.dark-mode .alert { background-color: #1e4620; color: #a3e635; }
@@ -186,11 +181,13 @@
 <body>
 
 <div class="container">
-    <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
-    <a href="/" class="nav-link">← Log Sheet</a>
-    <a href="/products" class="nav-link">Product Manager</a>
-    <h2>Daily Shift Summary & Reconciliation</h2>
-    <hr style="border-color: var(--border-color);">
+    {% set current_page = 'summary' %}
+    {% set page_title = 'Production Summary & Reconciliation' %}
+    {% include "navbar.html" %}
+
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+        <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+    </div>
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
