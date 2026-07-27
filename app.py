@@ -215,6 +215,9 @@ def save_batches():
 
 @app.route('/products', methods=['GET', 'POST'])
 def products_manager():
+    # Retrieve date query param or fall back to today's date
+    selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
+
     if request.method == 'POST':
         code = request.form.get('code').strip()
         name = request.form.get('name').strip()
@@ -226,17 +229,19 @@ def products_manager():
                 db.session.add(Product(code=code, name=name))
                 db.session.commit()
                 flash(f"Product '{code} - {name}' added successfully!", "success")
-        return redirect(url_for('products_manager'))
+        return redirect(url_for('products_manager', date=selected_date_str))
 
     all_products = Product.query.order_by(Product.code).all()
-    return render_template('products.html', products=all_products)
+    # Pass current_date to render_template so navbar can read it
+    return render_template('products.html', products=all_products, current_date=selected_date_str)
 
 @app.route('/products/edit/<int:id>', methods=['POST'])
 def edit_product(id):
+    selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
     product = Product.query.get(id)
     if not product:
         flash("Product not found.", "danger")
-        return redirect(url_for('products_manager'))
+        return redirect(url_for('products_manager', date=selected_date_str))
         
     code = request.form.get('code').strip()
     name = request.form.get('name').strip()
@@ -250,10 +255,12 @@ def edit_product(id):
             product.name = name
             db.session.commit()
             flash("Product updated successfully!", "success")
-    return redirect(url_for('products_manager'))
+
+    return redirect(url_for('products_manager', date=selected_date_str))
 
 @app.route('/products/delete/<int:id>', methods=['POST'])
 def delete_product(id):
+    selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
     product = Product.query.get(id)
     if product:
         EntryLog.query.filter_by(product_id=id).delete()
@@ -262,7 +269,8 @@ def delete_product(id):
         flash(f"Product '{product.code}' and its log history deleted successfully.", "success")
     else:
         flash("Product not found.", "danger")
-    return redirect(url_for('products_manager'))
+
+    return redirect(url_for('products_manager', date=selected_date_str))
 
 @app.route('/summary', methods=['GET', 'POST'])
 def summary():

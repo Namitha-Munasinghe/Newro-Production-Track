@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Poultry Log Sheet</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; margin: 0; background: var(--page-bg); color: var(--text); font-size: 0.9rem; line-height: 1.5; }
-        .container { max-width: 1240px; margin: 0 auto 32px; background: var(--surface); padding: 28px; border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-sm); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; margin: 0; background: var(--page-bg, #f8f9fa); color: var(--text, #343a40); font-size: 0.9rem; line-height: 1.5; }
+        .container { max-width: 1240px; margin: 0 auto 32px; background: var(--surface, #ffffff); padding: 28px; border: 1px solid var(--border, #dee2e6); border-radius: 8px; box-shadow: var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.05)); }
 
         /* HEADER & NAVIGATION STYLING */
         .header-top {
@@ -15,48 +15,119 @@
             align-items: center;
             margin-bottom: 15px;
         }
-        .header-top h2 { margin: 0; color: var(--text); font-size: 1.25rem; font-weight: 650; letter-spacing: -0.01em; }
+        .header-top h2 { margin: 0; color: var(--text, #343a40); font-size: 1.25rem; font-weight: 650; letter-spacing: -0.01em; }
 
+        .btn-add-data-nav {
+            background-color: var(--primary, #007bff);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s ease, transform 0.1s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-add-data-nav:hover { background-color: var(--primary-dark, #0056b3); transform: translateY(-1px); }
 
-        .controls-section { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; gap: 20px; padding: 14px; background: var(--surface-tint); border: 1px solid #cfe5ff; border-radius: 8px; }
-        .date-section label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; }
-        .date-section input { padding: 8px 10px; font: inherit; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+        .controls-section { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin: 20px 0; 
+            gap: 20px; 
+            padding: 14px; 
+            background: var(--surface-tint, #eef6ff); 
+            border: 1px solid #cfe5ff; 
+            border-radius: 8px; 
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Dynamic Date Section Colors */
+        .controls-section.is-today {
+            background: #e6f4ea !important; /* Light soft green */
+            border-color: #a8dab5 !important;
+        }
+        .controls-section.is-past-future {
+            background: #fff8e1 !important; /* Light soft yellow */
+            border-color: #ffe082 !important;
+        }
+
+        .date-section label { font-size: 0.75rem; color: var(--muted, #6c757d); letter-spacing: 0.06em; }
+        .date-section input { padding: 8px 10px; font: inherit; border: 1px solid var(--border, #dee2e6); border-radius: 6px; background: var(--surface, #ffffff); }
         .search-section { flex-grow: 1; max-width: 400px; }
-        .search-input { width: 100%; padding: 9px 12px; font: inherit; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; background: var(--surface); }
-        input:focus { outline: none; border-color: var(--primary) !important; box-shadow: var(--focus-ring); }
+        .search-input { width: 100%; padding: 9px 12px; font: inherit; border: 1px solid var(--border, #dee2e6); border-radius: 6px; box-sizing: border-box; background: var(--surface, #ffffff); }
+        input:focus { outline: none; border-color: var(--primary, #007bff) !important; box-shadow: var(--focus-ring, 0 0 0 3px rgba(0,123,255,0.15)); }
 
         table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; }
 
         th {
             position: sticky;
             z-index: 10;
-            box-shadow: inset 0 -1px 0 var(--border);
+            box-shadow: inset 0 -1px 0 var(--border, #dee2e6);
         }
 
         thead tr:nth-child(1) th { top: 0; }
         thead tr:nth-child(2) th { top: 35px; }
 
-        th, td { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 10px 12px; text-align: left; font-size: 0.85rem; }
-        table tr th:first-child, table tr td:first-child { border-left: 1px solid var(--border); }
-        table tr:first-child th { border-top: 1px solid var(--border); }
+        th, td { border-right: 1px solid var(--border, #dee2e6); border-bottom: 1px solid var(--border, #dee2e6); padding: 10px 12px; text-align: left; font-size: 0.85rem; }
+        table tr th:first-child, table tr td:first-child { border-left: 1px solid var(--border, #dee2e6); }
+        table tr:first-child th { border-top: 1px solid var(--border, #dee2e6); }
 
         tbody td { background-color: #ffffff !important; position: relative; z-index: 1; }
 
         .header-main { text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; background-color: #e9f3ff !important; color: #245b91; font-size: 0.75rem; }
-        .header-sub { background-color: #f8fbff !important; color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+        .header-sub { background-color: #f8fbff !important; color: var(--muted, #6c757d); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
         .product-row { transition: background 0.15s ease; }
         .product-row:hover td { background: #f8fbff !important; }
 
         .total-row { font-weight: 700; background-color: #e9f3ff; }
-        .total-row td { position: sticky; bottom: 0; background-color: #e9f3ff !important; z-index: 5; box-shadow: inset 0 1px 0 var(--border), inset 0 -1px 0 var(--border); }
+        .total-row td { position: sticky; bottom: 0; background-color: #e9f3ff !important; z-index: 5; box-shadow: inset 0 1px 0 var(--border, #dee2e6), inset 0 -1px 0 var(--border, #dee2e6); }
 
-        /* BOTTOM ACTION BUTTON GROUP STYLING */
-        .button-group { display: flex; gap: 12px; margin-top: 24px; }
+        /* IN-TABLE EMPTY STATE */
+        .empty-table-row td {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: #fafbfc !important;
+        }
+        .empty-state-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .empty-state-content h3 { margin: 0; color: #495057; font-size: 1.1rem; }
+        .empty-state-content p { margin: 0; color: #6c757d; font-size: 0.9rem; }
+        
+        .btn-add-large {
+            margin-top: 8px;
+            display: inline-block;
+            background-color: var(--primary, #007bff);
+            color: white;
+            padding: 8px 18px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+        .btn-add-large:hover { background-color: var(--primary-dark, #0056b3); transform: translateY(-1px); }
+
+        /* BOTTOM ACTION BAR - CENTERING LAYOUT */
+        .button-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-top: 24px;
+        }
 
         .btn-summary {
-            flex: 3;
+            width: 220px;
             padding: 12px;
-            background-color: var(--primary);
+            background-color: var(--primary, #007bff);
             color: white;
             border: none;
             font-size: 1em;
@@ -67,26 +138,51 @@
             text-align: center;
             box-sizing: border-box;
             display: inline-block;
+            transition: background 0.2s ease, transform 0.1s ease;
         }
-        .btn-summary:hover { background-color: var(--primary-dark); transform: translateY(-1px); }
+        .btn-summary:hover { background-color: var(--primary-dark, #0056b3); transform: translateY(-1px); }
 
-        .btn-delete {
-            flex: 1;
-            padding: 12px;
-            background-color: var(--danger);
-            color: white;
-            border: none;
-            font-size: 1em;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            text-align: center;
+        /* CIRCULAR DELETE BUTTON AT FAR RIGHT */
+        .button-group form,
+        .button-group > .btn-delete-icon {
+            position: absolute;
+            right: 0;
         }
-        .btn-delete:hover { background-color: #bd2130; transform: translateY(-1px); }
-        .btn-summary, .btn-delete { transition: background 0.2s ease, transform 0.2s ease; }
+
+        .btn-delete-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger, #dc3545);
+            border: 1px solid rgba(220, 53, 69, 0.25);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.1rem;
+            padding: 0;
+            flex-shrink: 0;
+        }
+        .btn-delete-icon:hover:not(:disabled) {
+            background-color: var(--danger, #dc3545);
+            color: #ffffff;
+            border-color: var(--danger, #dc3545);
+            transform: scale(1.05);
+            box-shadow: 0 2px 6px rgba(220, 53, 69, 0.25);
+        }
+        .btn-delete-icon:disabled, .btn-delete-icon.disabled {
+            background-color: #f1f3f5;
+            color: #adb5bd;
+            border-color: #dee2e6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
         .alert { padding: 10px 12px; border-radius: 6px; margin-bottom: 15px; background: rgba(40, 167, 69, 0.12); color: #1d6d32; font-weight: 600; }
-        @media (max-width: 700px) { .container { margin: 0 12px 24px; padding: 18px; } .controls-section, .button-group { align-items: stretch; flex-direction: column; } .search-section { max-width: none; } table { display: block; overflow-x: auto; } }
+        @media (max-width: 700px) { .container { margin: 0 12px 24px; padding: 18px; } .controls-section { align-items: stretch; flex-direction: column; } .search-section { max-width: none; } table { display: block; overflow-x: auto; } }
     </style>
 </head>
 <body>
@@ -99,6 +195,7 @@
     <!-- TOP HEADER -->
     <div class="header-top">
         <h2>Poultry Shift Production Sheet</h2>
+        <a href="{{ url_for('batch_entry', date=current_date) }}" class="btn-add-data-nav">➕ Enter Batch Data</a>
     </div>
     <hr>
 
@@ -122,6 +219,17 @@
         </div>
     </div>
 
+    <!-- PRE-CALCULATE LOGGED ITEMS COUNT -->
+    {% set logged_count = namespace(value=0) %}
+    {% for product in products %}
+        {% set item = existing_logs.get(product.id, {}) if existing_logs else {} %}
+        {% set has_day = (item.day_birds and item.day_birds != 0) or (item.day_weight and item.day_weight != 0) %}
+        {% set has_night = (item.night_birds and item.night_birds != 0) or (item.night_weight and item.night_weight != 0) %}
+        {% if has_day or has_night %}
+            {% set logged_count.value = logged_count.value + 1 %}
+        {% endif %}
+    {% endfor %}
+
     <!-- DISPLAY TABLE -->
     <table>
         <thead>
@@ -138,24 +246,40 @@
             </tr>
         </thead>
         <tbody id="product-rows">
-            {% for product in products %}
-            {% set item = existing_logs.get(product.id, {}) if existing_logs else {} %}
-            <tr class="product-row">
-                <td class="product-text"><strong>{{ product.code }}</strong> - {{ product.name }}</td>
+            
+            {% if logged_count.value > 0 %}
+                <!-- LOOP THROUGH LOGGED PRODUCTS -->
+                {% for product in products %}
+                    {% set item = existing_logs.get(product.id, {}) if existing_logs else {} %}
+                    {% set has_day = (item.day_birds and item.day_birds != 0) or (item.day_weight and item.day_weight != 0) %}
+                    {% set has_night = (item.night_birds and item.night_birds != 0) or (item.night_weight and item.night_weight != 0) %}
 
-                <!-- Day Shift Data -->
-                <td>{{ item.day_birds if item.day_birds and item.day_birds != 0 else '-' }}</td>
-                <td>{{ '%.2f'|format(item.day_weight) if item.day_weight and item.day_weight != 0 else '-' }}</td>
+                    {% if has_day or has_night %}
+                    <tr class="product-row">
+                        <td class="product-text"><strong>{{ product.code }}</strong> - {{ product.name }}</td>
 
-                <!-- Night Shift Data -->
-                <td>{{ item.night_birds if item.night_birds and item.night_birds != 0 else '-' }}</td>
-                <td>{{ '%.2f'|format(item.night_weight) if item.night_weight and item.night_weight != 0 else '-' }}</td>
-            </tr>
+                        <!-- Day Shift Data -->
+                        <td>{{ item.day_birds if item.day_birds and item.day_birds != 0 else '-' }}</td>
+                        <td>{{ '%.2f'|format(item.day_weight) if item.day_weight and item.day_weight != 0 else '-' }}</td>
+
+                        <!-- Night Shift Data -->
+                        <td>{{ item.night_birds if item.night_birds and item.night_birds != 0 else '-' }}</td>
+                        <td>{{ '%.2f'|format(item.night_weight) if item.night_weight and item.night_weight != 0 else '-' }}</td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
             {% else %}
-            <tr>
-                <td colspan="5" style="text-align: center; color: #7f8c8d;">No products in database yet.</td>
-            </tr>
-            {% endfor %}
+                <!-- IN-TABLE EMPTY STATE -->
+                <tr class="empty-table-row">
+                    <td colspan="5">
+                        <div class="empty-state-content">
+                            <h3>No Batch Entries Logged for {{ current_date }}</h3>
+                            <p>Select "Enter Batch Data" to start recording production.</p>
+                            <a href="{{ url_for('batch_entry', date=current_date) }}" class="btn-add-large">➕ Enter Batch Data</a>
+                        </div>
+                    </td>
+                </tr>
+            {% endif %}
 
             <tr class="total-row">
                 <td>Total</td>
@@ -167,16 +291,26 @@
         </tbody>
     </table>
 
-    {% if products %}
-    <!-- ACTION BUTTONS -->
+    <!-- BOTTOM ACTION AREA -->
     <div class="button-group">
-        <a href="/summary?date={{ current_date }}" class="btn-summary">📊 Summary</a>
-        <form method="POST" action="/log/delete" style="flex: 1;" onsubmit="return confirmDelete('{{ current_date }}')">
-            <input type="hidden" name="date" value="{{ current_date }}">
-            <button type="submit" class="btn-delete" style="width: 100%;">🗑️ Delete Logs</button>
-        </form>
+        <!-- SUMMARY BUTTON CENTERED -->
+        <a href="/summary?date={{ current_date }}" class="btn-summary">📊 View Summary</a>
+
+        <!-- CIRCULAR DELETE BUTTON POSITIONED ON THE RIGHT CORNER -->
+        {% if logged_count.value > 0 %}
+            <form method="POST" action="/log/delete" style="display: inline; margin: 0;" onsubmit="return confirmDelete('{{ current_date }}')">
+                <input type="hidden" name="date" value="{{ current_date }}">
+                <button type="submit" class="btn-delete-icon" title="Clear/Delete logs for {{ current_date }}">
+                    🗑️
+                </button>
+            </form>
+        {% else %}
+            <button class="btn-delete-icon disabled" title="No logs available to delete" onclick="alert('No logs available to delete for this date.')" disabled>
+                🗑️
+            </button>
+        {% endif %}
     </div>
-    {% endif %}
+
 </main>
 
 <script>
@@ -186,40 +320,74 @@
 
     // Quick Search Filter
     const searchBox = document.getElementById('search-box');
-    const productRows = document.querySelectorAll('.product-row');
-
-    searchBox.addEventListener('keyup', function() {
-        const query = searchBox.value.toLowerCase().trim();
-        productRows.forEach(row => {
-            const text = row.querySelector('.product-text').textContent.toLowerCase();
-            row.style.display = text.includes(query) ? "" : "none";
+    if (searchBox) {
+        searchBox.addEventListener('keyup', function() {
+            const query = searchBox.value.toLowerCase().trim();
+            document.querySelectorAll('.product-row').forEach(row => {
+                const text = row.querySelector('.product-text').textContent.toLowerCase();
+                row.style.display = text.includes(query) ? "" : "none";
+            });
+            calculateTotals();
         });
-    });
+    }
 
-    // Calculate Totals for the page
+    // Calculate Totals for visible rows
     function calculateTotals() {
         let dayBirds = 0, dayWeight = 0, nightBirds = 0, nightWeight = 0;
 
         document.querySelectorAll('.product-row').forEach(row => {
-            const cells = row.querySelectorAll('td');
-            const dB = parseInt(cells[1].innerText);
-            const dW = parseFloat(cells[2].innerText);
-            const nB = parseInt(cells[3].innerText);
-            const nW = parseFloat(cells[4].innerText);
+            if (row.style.display !== 'none') {
+                const cells = row.querySelectorAll('td');
+                const dB = parseInt(cells[1].innerText);
+                const dW = parseFloat(cells[2].innerText);
+                const nB = parseInt(cells[3].innerText);
+                const nW = parseFloat(cells[4].innerText);
 
-            if (!isNaN(dB)) dayBirds += dB;
-            if (!isNaN(dW)) dayWeight += dW;
-            if (!isNaN(nB)) nightBirds += nB;
-            if (!isNaN(nW)) nightWeight += nW;
+                if (!isNaN(dB)) dayBirds += dB;
+                if (!isNaN(dW)) dayWeight += dW;
+                if (!isNaN(nB)) nightBirds += nB;
+                if (!isNaN(nW)) nightWeight += nW;
+            }
         });
 
-        document.getElementById('total-day-birds').innerText = dayBirds;
-        document.getElementById('total-night-birds').innerText = nightBirds;
-        document.getElementById('total-day-weight').innerText = dayWeight.toFixed(2);
-        document.getElementById('total-night-weight').innerText = nightWeight.toFixed(2);
+        const elDayBirds = document.getElementById('total-day-birds');
+        const elNightBirds = document.getElementById('total-night-birds');
+        const elDayWeight = document.getElementById('total-day-weight');
+        const elNightWeight = document.getElementById('total-night-weight');
+
+        if (elDayBirds) elDayBirds.innerText = dayBirds;
+        if (elNightBirds) elNightBirds.innerText = nightBirds;
+        if (elDayWeight) elDayWeight.innerText = dayWeight.toFixed(2);
+        if (elNightWeight) elNightWeight.innerText = nightWeight.toFixed(2);
     }
 
-    calculateTotals();
+    // Check date and update container color
+    function updateDateContainerColor() {
+        const dateInput = document.getElementById('date');
+        const controlsSection = document.querySelector('.controls-section');
+        if (!dateInput || !controlsSection) return;
+
+        const selectedDateStr = dateInput.value;
+
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+
+        if (selectedDateStr === todayStr) {
+            controlsSection.classList.add('is-today');
+            controlsSection.classList.remove('is-past-future');
+        } else {
+            controlsSection.classList.add('is-past-future');
+            controlsSection.classList.remove('is-today');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateTotals();
+        updateDateContainerColor();
+    });
 </script>
 
 </body>

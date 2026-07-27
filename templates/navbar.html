@@ -78,13 +78,13 @@
     </div>
     <div class="app-navbar__actions">
         {% if active_page == 'home' %}
-            <a href="{{ url_for('batch_entry', date=current_date) }}" class="app-navbar__link app-navbar__link--entry">Enter Data</a>
-            <a href="{{ url_for('products_manager') }}" class="app-navbar__link">Product Manager</a>
+            <!-- <a href="{{ url_for('batch_entry', date=current_date) }}" class="app-navbar__link app-navbar__link--entry">Enter Data</a> -->
+            <a href="{{ url_for('products_manager', date=current_date) }}" class="app-navbar__link">Product Manager</a>
         {% elif active_page == 'entry' %}
             <a href="{{ log_sheet_url }}" class="app-navbar__link">← Log Sheet</a>
         {% elif active_page == 'summary' %}
             <a href="{{ log_sheet_url }}" class="app-navbar__link">← Log Sheet</a>
-            <a href="{{ url_for('products_manager') }}" class="app-navbar__link">Product Manager</a>
+            <a href="{{ url_for('products_manager', date=current_date) }}" class="app-navbar__link">Product Manager</a>
         {% elif active_page == 'products' %}
             <a href="{{ log_sheet_url }}" class="app-navbar__link">← Log Sheet</a>
         {% endif %}
