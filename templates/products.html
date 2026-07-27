@@ -2,45 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Manager</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f6f7; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .nav-link { float: right; background: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; }
-        h2 { color: #2c3e50; margin-top: 0; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        .btn-add { background-color: #2980b9; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold;}
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; margin: 0; background: var(--page-bg); color: var(--text); font-size: 0.9rem; line-height: 1.5; }
+        .container { max-width: 1240px; margin: 0 auto 32px; background: var(--surface); padding: 28px; border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-sm); }
+        h2 { color: var(--text); margin: 0; font-size: 1.25rem; font-weight: 650; }
+        h3 { margin: 24px 0 12px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+        hr { margin: 16px 0 24px; border: 0; border-top: 1px solid var(--border); }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+        .form-group input { width: 100%; padding: 9px 10px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; font: inherit; }
+        input:focus { outline: none; border-color: var(--primary) !important; box-shadow: var(--focus-ring); }
+        .btn-add { background: var(--primary); color: white; padding: 9px 14px; border: none; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 600; transition: background 0.2s ease, transform 0.2s ease; }
+        .btn-add:hover { background: var(--primary-dark); transform: translateY(-1px); }
         
         /* Search Bar Styles */
-        .search-section { margin: 25px 0 15px 0; }
-        .search-input { width: 100%; padding: 12px; font-size: 1em; border: 1px solid #7f8c8d; border-radius: 4px; box-sizing: border-box; }
-        .search-input:focus { outline: none; border-color: #2980b9; box-shadow: 0 0 5px rgba(41, 128, 185, 0.3); }
+        .search-section { margin: 28px 0 15px; padding-top: 4px; }
+        .search-input { width: 100%; padding: 10px 12px; font: inherit; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #bdc3c7; padding: 10px; text-align: left; vertical-align: middle; }
-        th { background-color: #ecf0f1; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        th, td { border-bottom: 1px solid var(--border); padding: 11px 12px; text-align: left; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: 0; }
+        th { background: #f1f5f9; color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+        .product-row { transition: background 0.15s ease; }
+        .product-row:hover { background: var(--surface-tint); }
         
         /* Action Buttons */
-        .btn-edit { background-color: #2980b9; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.9em; }
-        .btn-delete { background-color: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
-        .btn-save { background-color: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
-        .btn-cancel { background-color: #95a5a6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .btn-edit, .btn-delete, .btn-save, .btn-cancel { color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; font: inherit; font-size: 0.78rem; font-weight: 600; transition: filter 0.2s ease, transform 0.2s ease; }
+        .btn-edit { background: var(--primary); } .btn-delete { background: var(--danger); } .btn-save { background: var(--success); } .btn-cancel { background: var(--secondary); }
+        .btn-edit:hover, .btn-delete:hover, .btn-save:hover, .btn-cancel:hover { filter: brightness(0.92); transform: translateY(-1px); }
         .action-forms { display: inline-block; margin: 0; }
         
-        .alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; }
-        .alert-success { background-color: #d4edda; color: #155724; }
-        .alert-danger { background-color: #f8d7da; color: #721c24; }
+        .alert { padding: 10px 12px; border-radius: 6px; margin-bottom: 15px; font-weight: 600; }
+        .alert-success { background: rgba(40, 167, 69, 0.12); color: #1d6d32; }
+        .alert-danger { background: rgba(220, 53, 69, 0.12); color: #a71d2a; }
         
         /* Inline Edit Elements */
-        .edit-input { padding: 5px; width: 90%; box-sizing: border-box; border: 1px solid #f39c12; border-radius: 4px; }
+        .edit-input { padding: 7px; width: 90%; box-sizing: border-box; border: 1px solid var(--primary); border-radius: 5px; font: inherit; }
+        @media (max-width: 700px) { .container { margin: 0 12px 24px; padding: 18px; } table { display: block; overflow-x: auto; } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <a href="/" class="nav-link">← Back to Home Log Sheet</a>
+{% set active_page = 'products' %}
+{% set navbar_title = 'Product Manager' %}
+{% include 'navbar.html' %}
+<main class="container">
     <h2>Product Manager</h2>
     <hr>
 
@@ -114,7 +122,7 @@
             {% endfor %}
         </tbody>
     </table>
-</div>
+</main>
 
 <script>
     // 1. DYNAMIC SEARCH FILTER
