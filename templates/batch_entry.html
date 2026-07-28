@@ -41,6 +41,27 @@
         }
         .shift-btn.active-day, .shift-btn.active-night { background: var(--primary); color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
 
+        /* Dynamic Date Picker Highlight Styles */
+        .date-picker-highlight {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 0.85rem;
+            outline: none;
+            transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+        }
+        .date-picker-highlight.is-today {
+            background-color: #e6f4ea !important;
+            border-color: #34a853 !important;
+            color: #137333 !important;
+        }
+        .date-picker-highlight.is-not-today {
+            background-color: #fef7e0 !important;
+            border-color: #f9ab00 !important;
+            color: #b06000 !important;
+        }
+
         /* Main Workspace Layout */
         .dashboard-container {
             display: flex;
@@ -131,7 +152,7 @@
             align-items: center;
         }
         .card-header h3 { margin: 0; font-size: 0.85rem; color: var(--text); font-weight: 650; }
-        .btn-close-card { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #7f8c8d; }
+        .btn-close-card { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #7f8c8d; line-height: 1; padding: 0 4px; }
         .btn-close-card:hover { color: #e74c3c; }
 
         .card-body { padding: 15px; }
@@ -158,46 +179,46 @@
             border-top: 1px solid #eee;
             padding: 10px 15px;
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
             font-size: 0.85em;
         }
         .card-totals {
             display: flex;
-            justify-content: space-between;
+            gap: 15px;
             font-weight: bold;
         }
-        .card-footer-actions {
+        
+        .card-footer-controls {
             display: flex;
-            justify-content: flex-end;
-            gap: 8px;
+            align-items: center;
+            gap: 10px;
         }
-        .btn-card-save {
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 5px 12px;
+        .save-status {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+        .btn-delete-card {
+            background: transparent;
+            color: #e74c3c;
+            border: 1px solid transparent;
+            padding: 4px 8px;
             border-radius: 4px;
             cursor: pointer;
-            font-weight: bold;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
         }
-        .btn-card-save:hover { background: #219653; }
-        .btn-card-cancel {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 5px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
+        .btn-delete-card:hover {
+            background: rgba(231, 76, 60, 0.1);
+            border-color: #e74c3c;
         }
-        .btn-card-cancel:hover { background: #c0392b; }
-
-        .btn-save-all { background: var(--success); color: white; border: none; padding: 10px 18px; font-size: 0.9rem; font-weight: 650; border-radius: 6px; cursor: pointer; }
-        .btn-save-all:hover { background: #219653; }
 
         .empty-workspace-state { text-align: center; color: var(--muted); margin-top: 80px; }
-        .product-item, .btn-add-batch, .btn-card-save, .btn-card-cancel, .btn-save-all { transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease; }
+        .product-item, .btn-add-batch { transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease; }
         @media (max-width: 800px) { .top-bar { padding: 10px 16px; flex-wrap: wrap; gap: 10px; } .dashboard-container { height: auto; min-height: calc(100vh - 113px); flex-direction: column; overflow: visible; } .sidebar { width: 100%; max-height: 300px; border-right: 0; border-bottom: 1px solid var(--border); } .workspace { overflow: visible; } .cards-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -214,7 +235,11 @@
         <h2>Poultry Shift Data Entry</h2>
     </div>
     <div class="top-controls">
-        <input type="date" id="entry-date" style="padding: 6px; border-radius: 4px; border: none;" value="{{ current_date }}" onchange="loadSavedEntries()">
+        <input type="date" 
+               id="entry-date" 
+               class="date-picker-highlight" 
+               value="{{ current_date }}" 
+               onchange="onDateChange()">
         
         <div class="shift-toggle-container">
             <button class="shift-btn active-day" id="btn-day" onclick="setShift('day')">☀️ Day Shift</button>
@@ -246,7 +271,6 @@
     <div class="workspace">
         <div class="workspace-header">
             <h3 id="current-shift-title" style="margin:0;">Active Mode: <span style="color: #f39c12;">Day Shift</span></h3>
-            <button class="btn-save-all" onclick="saveAllEntries()">💾 Save All Open Cards (Ctrl+Enter)</button>
         </div>
 
         <div id="empty-state" class="empty-workspace-state">
@@ -262,6 +286,7 @@
 <script>
     let activeShift = 'day';
     let savedEntriesMap = {};
+    let saveTimeouts = {};
 
     document.addEventListener('DOMContentLoaded', function() {
         const productList = document.getElementById('product-list');
@@ -279,15 +304,35 @@
             });
         }
 
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                saveAllEntries();
-            }
-        });
-
+        updateDateHighlight();
         loadSavedEntries();
     });
+
+    function updateDateHighlight() {
+        const dateInput = document.getElementById('entry-date');
+        if (!dateInput) return;
+
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+
+        if (dateInput.value === todayStr) {
+            dateInput.classList.add('is-today');
+            dateInput.classList.remove('is-not-today');
+            dateInput.title = "Editing Today's Data";
+        } else {
+            dateInput.classList.add('is-not-today');
+            dateInput.classList.remove('is-today');
+            dateInput.title = "⚠️ Caution: Viewing/Editing Historical or Future Date";
+        }
+    }
+
+    function onDateChange() {
+        updateDateHighlight();
+        loadSavedEntries();
+    }
 
     function loadSavedEntries() {
         const date = document.getElementById('entry-date').value;
@@ -374,7 +419,7 @@
         card.innerHTML = `
             <div class="card-header">
                 <h3><strong>${code}</strong> - ${name}</h3>
-                <button class="btn-close-card" onclick="closeProductCard(${productId})" title="Close card">&times;</button>
+                <button class="btn-close-card" onclick="closeProductCardUI(${productId})" title="Close card">&times;</button>
             </div>
             <div class="card-body">
                 <table class="batch-table">
@@ -390,17 +435,19 @@
                     </tbody>
                 </table>
                 <div class="card-actions">
-                    <button class="btn-add-batch" onclick="addBatchRow(${productId})">+ Add </button>
+                    <button class="btn-add-batch" onclick="addBatchRow(${productId})">+ Add Row</button>
                 </div>
             </div>
             <div class="card-footer">
                 <div class="card-totals">
-                    <span>Total Birds: <span id="total-birds-${productId}">0</span></span>
-                    <span>Total Weight: <span id="total-weight-${productId}">0.00</span> kg</span>
+                    <span>Birds: <span id="total-birds-${productId}">0</span></span>
+                    <span>Weight: <span id="total-weight-${productId}">0.00</span> kg</span>
                 </div>
-                <div class="card-footer-actions">
-                    <button class="btn-card-cancel" onclick="closeProductCard(${productId})">Close</button>
-                    <button class="btn-card-save" onclick="saveSingleCard(${productId})">Save Card</button>
+                <div class="card-footer-controls">
+                    <span class="save-status" id="save-status-${productId}">Auto-saved</span>
+                    <button class="btn-delete-card" onclick="deleteCardWithConfirmation(${productId})" title="Delete card data">
+                        🗑️
+                    </button>
                 </div>
             </div>
         `;
@@ -408,16 +455,16 @@
         container.appendChild(card);
 
         if (initialBatches && initialBatches.length > 0) {
-            initialBatches.forEach(b => addBatchRow(productId, b.birds, b.weight));
+            initialBatches.forEach(b => addBatchRow(productId, b.birds, b.weight, false));
         } else {
-            addBatchRow(productId);
-            addBatchRow(productId);
+            addBatchRow(productId, '', '', false);
+            addBatchRow(productId, '', '', false);
         }
 
         calculateCardTotals(productId);
     }
 
-    function addBatchRow(productId, birdsVal = '', weightVal = '') {
+    function addBatchRow(productId, birdsVal = '', weightVal = '', triggerAutoSave = true) {
         const tbody = document.getElementById(`batch-rows-${productId}`);
         const rowCount = tbody.children.length + 1;
         
@@ -425,8 +472,8 @@
         tr.className = 'batch-row';
         tr.innerHTML = `
             <td style="color: #7f8c8d;">${rowCount}</td>
-            <td><input type="number" min="0" class="birds-input" placeholder="0" value="${birdsVal}" oninput="calculateCardTotals(${productId})"></td>
-            <td><input type="number" min="0" step="0.01" class="weight-input" placeholder="0.00" value="${weightVal}" oninput="calculateCardTotals(${productId})"></td>
+            <td><input type="number" min="0" class="birds-input" placeholder="0" value="${birdsVal}" oninput="handleInputChange(${productId})"></td>
+            <td><input type="number" min="0" step="0.01" class="weight-input" placeholder="0.00" value="${weightVal}" oninput="handleInputChange(${productId})"></td>
             <td><button class="btn-remove-row" onclick="removeBatchRow(this, ${productId})">&times;</button></td>
         `;
 
@@ -442,13 +489,30 @@
         weightInput.addEventListener('keydown', function(e) {
             handleInputKeydown(e, productId, tr, 'weight');
         });
+
+        if (triggerAutoSave) {
+            handleInputChange(productId);
+        }
     }
 
-    // Unified Input Navigation Logic
+    function handleInputChange(productId) {
+        calculateCardTotals(productId);
+        
+        const statusElem = document.getElementById(`save-status-${productId}`);
+        if (statusElem) statusElem.innerText = "Saving...";
+
+        if (saveTimeouts[productId]) {
+            clearTimeout(saveTimeouts[productId]);
+        }
+
+        saveTimeouts[productId] = setTimeout(() => {
+            autoSaveCard(productId);
+        }, 500);
+    }
+
     function handleInputKeydown(e, productId, tr, fieldType) {
         const key = e.key;
 
-        // Enter Key Navigation
         if (key === 'Enter') {
             e.preventDefault();
             if (fieldType === 'birds') {
@@ -468,7 +532,6 @@
             return;
         }
 
-        // Vertical Navigation (ArrowUp / ArrowDown)
         if (key === 'ArrowDown') {
             e.preventDefault();
             const nextRow = tr.nextElementSibling;
@@ -489,24 +552,19 @@
             return;
         }
 
-        // Horizontal Card Navigation (Right / Left Arrow keys)
         if (key === 'ArrowRight') {
-            // Trigger jump to NEXT card when pressing Right Arrow on Weight input OR when holding Ctrl
             if (fieldType === 'weight' || e.ctrlKey || e.altKey) {
                 e.preventDefault();
                 const rowIndex = Array.from(tr.parentElement.children).indexOf(tr);
-                // ALWAYS target 'birds' field in the next card
                 navigateCards(productId, 'next', 'birds', rowIndex);
             }
             return;
         }
 
         if (key === 'ArrowLeft') {
-            // Trigger jump to PREVIOUS card when pressing Left Arrow on Birds input OR when holding Ctrl
             if (fieldType === 'birds' || e.ctrlKey || e.altKey) {
                 e.preventDefault();
                 const rowIndex = Array.from(tr.parentElement.children).indexOf(tr);
-                // Target 'weight' field when going backward
                 navigateCards(productId, 'prev', 'weight', rowIndex);
             }
             return;
@@ -553,7 +611,7 @@
             tr.cells[0].innerText = index + 1;
         });
 
-        calculateCardTotals(productId);
+        handleInputChange(productId);
     }
 
     function calculateCardTotals(productId) {
@@ -590,7 +648,7 @@
         return batches;
     }
 
-    function closeProductCard(productId) {
+    function closeProductCardUI(productId) {
         const card = document.getElementById(`card-${productId}`);
         if (card) {
             card.remove();
@@ -604,14 +662,7 @@
         }
     }
 
-    function handleProductDeletion(productId) {
-        delete savedEntriesMap[productId];
-        const badge = document.getElementById(`badge-${productId}`);
-        if (badge) badge.style.display = 'none';
-        closeProductCard(productId);
-    }
-
-    function saveSingleCard(productId) {
+    function autoSaveCard(productId) {
         const batches = getCardBatches(productId);
 
         const payload = {
@@ -627,81 +678,61 @@
         })
         .then(response => response.json())
         .then(data => {
+            const statusElem = document.getElementById(`save-status-${productId}`);
             if (data.status === 'success') {
                 if (batches.length > 0) {
                     savedEntriesMap[productId] = batches;
                     const badge = document.getElementById(`badge-${productId}`);
                     if (badge) badge.style.display = 'inline-block';
-                    alert("Card saved successfully!");
+                    if (statusElem) statusElem.innerText = "Auto-saved";
                 } else {
-                    handleProductDeletion(productId);
-                    alert("Card had no remaining rows. Entry was deleted successfully.");
+                    delete savedEntriesMap[productId];
+                    const badge = document.getElementById(`badge-${productId}`);
+                    if (badge) badge.style.display = 'none';
+                    if (statusElem) statusElem.innerText = "Empty";
                 }
             } else {
-                alert("Error updating entry: " + data.message);
+                if (statusElem) statusElem.innerText = "Save failed";
             }
         })
-        .catch(err => alert("Network error saving entry: " + err));
+        .catch(err => {
+            const statusElem = document.getElementById(`save-status-${productId}`);
+            if (statusElem) statusElem.innerText = "Offline";
+        });
     }
 
-    function saveAllEntries() {
-        const openCards = document.querySelectorAll('.product-card');
+    function deleteCardWithConfirmation(productId) {
+        const sidebarItem = document.querySelector(`.product-item[data-id="${productId}"]`);
+        const pName = sidebarItem ? sidebarItem.dataset.name : 'this product';
 
-        if (openCards.length === 0) {
-            alert("No open cards to save.");
-            return;
+        if (confirm(`Are you sure you want to delete all entry data for "${pName}"?`)) {
+            const payload = {
+                date: document.getElementById('entry-date').value,
+                shift: activeShift,
+                entries: [{ product_id: productId, batches: [] }]
+            };
+
+            fetch('/api/save-batches', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    delete savedEntriesMap[productId];
+                    const badge = document.getElementById(`badge-${productId}`);
+                    if (badge) badge.style.display = 'none';
+
+                    closeProductCardUI(productId);
+                } else {
+                    alert("Failed to delete card data: " + data.message);
+                }
+            })
+            .catch(err => alert("Error deleting card data: " + err));
         }
-
-        const entriesPayload = [];
-
-        openCards.forEach(card => {
-            const productId = parseInt(card.getAttribute('data-product-id'));
-            const batches = getCardBatches(productId);
-
-            if (batches.length > 0) {
-                entriesPayload.push({ product_id: productId, batches: batches });
-            } else {
-                entriesPayload.push({ product_id: productId, batches: [] });
-            }
-        });
-
-        const payload = {
-            date: document.getElementById('entry-date').value,
-            shift: activeShift,
-            entries: entriesPayload
-        };
-
-        fetch('/api/save-batches', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                entriesPayload.forEach(item => {
-                    if (item.batches.length > 0) {
-                        savedEntriesMap[item.product_id] = item.batches;
-                        const badge = document.getElementById(`badge-${item.product_id}`);
-                        if (badge) badge.style.display = 'inline-block';
-                    } else {
-                        handleProductDeletion(item.product_id);
-                    }
-                });
-
-                alert("All open cards updated successfully!");
-            } else {
-                alert("Error saving entries: " + data.message);
-            }
-        })
-        .catch(err => alert("Network error saving entries: " + err));
     }
 </script>
 
 </body>
 </html>
-
-
-<!-- add an edit button for the previous day data entry -->
- <!-- add a top navigation bar  -->
-  summary page
