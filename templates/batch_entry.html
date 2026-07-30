@@ -62,6 +62,75 @@
             color: #b06000 !important;
         }
 
+        /* Edit Mode Action Buttons (Positioned to Left of Date Picker) */
+        .edit-controls-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-edit-mode {
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .btn-edit-mode:hover { background-color: #d68910; }
+
+        .btn-save-mode {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .btn-save-mode:hover { background-color: #219653; }
+
+        .btn-revoke-mode {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .btn-revoke-mode:hover { background-color: #c0392b; }
+
+        /* Read-Only State Enforcement */
+        body.is-readonly input[type="number"],
+        body.is-readonly input[type="text"] {
+            background-color: #f5f7fa !important;
+            cursor: not-allowed !important;
+            border-color: #e2e8f0 !important;
+        }
+        body.is-readonly .btn-remove-row,
+        body.is-readonly .btn-delete-card,
+        body.is-readonly .btn-close-card,
+        body.is-readonly .btn-add-batch {
+            display: none !important;
+        }
+
         /* Main Workspace Layout */
         .dashboard-container {
             display: flex;
@@ -235,15 +304,23 @@
         <h2>Poultry Shift Data Entry</h2>
     </div>
     <div class="top-controls">
+        <!-- Controls placed to the LEFT of the date picker -->
+        <div class="edit-controls-group">
+            <button id="btn-edit-toggle" class="btn-edit-mode" onclick="enableEditMode()">✏️ Edit</button>
+            <button id="btn-save-toggle" class="btn-save-mode" onclick="saveManualChanges()">💾 Save Changes</button>
+            <button id="btn-revoke-toggle" class="btn-revoke-mode" onclick="revokeChanges()">🚫 Discard Changes</button>
+        </div>
+
         <input type="date" 
                id="entry-date" 
                class="date-picker-highlight" 
                value="{{ current_date }}" 
                onchange="onDateChange()">
-        
+
+        <!-- Swapped order: Night Shift on left, Day Shift on right -->
         <div class="shift-toggle-container">
-            <button class="shift-btn active-day" id="btn-day" onclick="setShift('day')">☀️ Day Shift</button>
-            <button class="shift-btn" id="btn-night" onclick="setShift('night')">🌙 Night Shift</button>
+            <button class="shift-btn active-night" id="btn-night" onclick="setShift('night')">🌙 Night Shift</button>
+            <button class="shift-btn" id="btn-day" onclick="setShift('day')">☀️ Day Shift</button>
         </div>
     </div>
 </div>
@@ -270,7 +347,7 @@
     <!-- MAIN WORKSPACE -->
     <div class="workspace">
         <div class="workspace-header">
-            <h3 id="current-shift-title" style="margin:0;">Active Mode: <span style="color: #f39c12;">Day Shift</span></h3>
+            <h3 id="current-shift-title" style="margin:0;">Active Mode: <span style="color: #8e44ad;">Night Shift</span></h3>
         </div>
 
         <div id="empty-state" class="empty-workspace-state">
@@ -284,9 +361,12 @@
 </div>
 
 <script>
-    let activeShift = 'day';
+    // Set default active shift to night
+    let activeShift = 'night';
     let savedEntriesMap = {};
     let saveTimeouts = {};
+    let isPreviousDate = false;
+    let isEditMode = false;
 
     document.addEventListener('DOMContentLoaded', function() {
         const productList = document.getElementById('product-list');
@@ -308,25 +388,135 @@
         loadSavedEntries();
     });
 
-    function updateDateHighlight() {
-        const dateInput = document.getElementById('entry-date');
-        if (!dateInput) return;
-
+    function getTodayString() {
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
-        const todayStr = `${year}-${month}-${day}`;
+        return `${year}-${month}-${day}`;
+    }
 
-        if (dateInput.value === todayStr) {
+    function updateDateHighlight() {
+        const dateInput = document.getElementById('entry-date');
+        if (!dateInput) return;
+
+        const todayStr = getTodayString();
+        const selectedDate = dateInput.value;
+
+        if (selectedDate === todayStr) {
             dateInput.classList.add('is-today');
             dateInput.classList.remove('is-not-today');
             dateInput.title = "Editing Today's Data";
+            isPreviousDate = false;
         } else {
             dateInput.classList.add('is-not-today');
             dateInput.classList.remove('is-today');
-            dateInput.title = "⚠️ Caution: Viewing/Editing Historical or Future Date";
+            dateInput.title = "⚠️ Caution: Viewing Historical/Future Date";
+            
+            // Check if selected date is strictly prior to today
+            isPreviousDate = selectedDate < todayStr;
         }
+
+        // Reset edit mode state when switching dates
+        isEditMode = false;
+        updateControlsVisibility();
+    }
+
+    function updateControlsVisibility() {
+        const editBtn = document.getElementById('btn-edit-toggle');
+        const saveBtn = document.getElementById('btn-save-toggle');
+        const revokeBtn = document.getElementById('btn-revoke-toggle');
+
+        if (isPreviousDate) {
+            if (isEditMode) {
+                editBtn.style.display = 'none';
+                saveBtn.style.display = 'inline-flex';
+                revokeBtn.style.display = 'inline-flex';
+                document.body.classList.remove('is-readonly');
+            } else {
+                editBtn.style.display = 'inline-flex';
+                saveBtn.style.display = 'none';
+                revokeBtn.style.display = 'none';
+                document.body.classList.add('is-readonly');
+            }
+        } else {
+            // Today or Future date
+            editBtn.style.display = 'none';
+            saveBtn.style.display = 'none';
+            revokeBtn.style.display = 'none';
+            document.body.classList.remove('is-readonly');
+        }
+
+        // Apply readonly state to existing input elements
+        const readOnlyState = isPreviousDate && !isEditMode;
+        document.querySelectorAll('.batch-table input').forEach(input => {
+            input.readOnly = readOnlyState;
+        });
+    }
+
+    function enableEditMode() {
+        isEditMode = true;
+        updateControlsVisibility();
+    }
+
+    function saveManualChanges() {
+        if (!confirm("Are you sure you want to save these changes?")) {
+            return;
+        }
+
+        const date = document.getElementById('entry-date').value;
+        const allCards = document.querySelectorAll('.product-card');
+        const entries = [];
+
+        allCards.forEach(card => {
+            const productId = parseInt(card.getAttribute('data-product-id'));
+            const batches = getCardBatches(productId);
+            entries.push({ product_id: productId, batches: batches });
+        });
+
+        const payload = {
+            date: date,
+            shift: activeShift,
+            entries: entries
+        };
+
+        fetch('/api/save-batches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                entries.forEach(e => {
+                    if (e.batches.length > 0) {
+                        savedEntriesMap[e.product_id] = e.batches;
+                    } else {
+                        delete savedEntriesMap[e.product_id];
+                    }
+                    const statusElem = document.getElementById(`save-status-${e.product_id}`);
+                    if (statusElem) statusElem.innerText = "Saved";
+                });
+
+                isEditMode = false;
+                updateControlsVisibility();
+                alert("Changes saved successfully!");
+            } else {
+                alert("Failed to save changes: " + (data.message || "Unknown error"));
+            }
+        })
+        .catch(err => {
+            alert("Error saving data: " + err);
+        });
+    }
+
+    function revokeChanges() {
+        if (!confirm("Are you sure you want to discard your changes? All unsaved modifications will be lost.")) {
+            return;
+        }
+
+        // Reload data from backend to discard changes
+        loadSavedEntries();
     }
 
     function onDateChange() {
@@ -362,8 +552,12 @@
                         }
                     });
                 }
+                updateControlsVisibility();
             })
-            .catch(err => console.error("Error loading saved data:", err));
+            .catch(err => {
+                console.error("Error loading saved data:", err);
+                updateControlsVisibility();
+            });
     }
 
     function setShift(shift) {
@@ -372,14 +566,14 @@
         const btnNight = document.getElementById('btn-night');
         const shiftTitle = document.getElementById('current-shift-title');
 
-        if (shift === 'day') {
-            btnDay.className = 'shift-btn active-day';
-            btnNight.className = 'shift-btn';
-            shiftTitle.innerHTML = 'Active Mode: <span style="color: #f39c12;">Day Shift</span>';
-        } else {
-            btnDay.className = 'shift-btn';
+        if (shift === 'night') {
             btnNight.className = 'shift-btn active-night';
+            btnDay.className = 'shift-btn';
             shiftTitle.innerHTML = 'Active Mode: <span style="color: #8e44ad;">Night Shift</span>';
+        } else {
+            btnNight.className = 'shift-btn';
+            btnDay.className = 'shift-btn active-day';
+            shiftTitle.innerHTML = 'Active Mode: <span style="color: #f39c12;">Day Shift</span>';
         }
 
         loadSavedEntries();
@@ -444,7 +638,7 @@
                     <span>Weight: <span id="total-weight-${productId}">0.00</span> kg</span>
                 </div>
                 <div class="card-footer-controls">
-                    <span class="save-status" id="save-status-${productId}">Auto-saved</span>
+                    <span class="save-status" id="save-status-${productId}">Loaded</span>
                     <button class="btn-delete-card" onclick="deleteCardWithConfirmation(${productId})" title="Delete card data">
                         🗑️
                     </button>
@@ -462,6 +656,7 @@
         }
 
         calculateCardTotals(productId);
+        updateControlsVisibility();
     }
 
     function addBatchRow(productId, birdsVal = '', weightVal = '', triggerAutoSave = true) {
@@ -493,11 +688,20 @@
         if (triggerAutoSave) {
             handleInputChange(productId);
         }
+
+        updateControlsVisibility();
     }
 
     function handleInputChange(productId) {
         calculateCardTotals(productId);
         
+        // Disable auto-save when viewing/editing a previous date
+        if (isPreviousDate) {
+            const statusElem = document.getElementById(`save-status-${productId}`);
+            if (statusElem) statusElem.innerText = "Unsaved changes";
+            return;
+        }
+
         const statusElem = document.getElementById(`save-status-${productId}`);
         if (statusElem) statusElem.innerText = "Saving...";
 
@@ -511,6 +715,8 @@
     }
 
     function handleInputKeydown(e, productId, tr, fieldType) {
+        if (isPreviousDate && !isEditMode) return;
+
         const key = e.key;
 
         if (key === 'Enter') {
@@ -663,6 +869,8 @@
     }
 
     function autoSaveCard(productId) {
+        if (isPreviousDate) return;
+
         const batches = getCardBatches(productId);
 
         const payload = {
