@@ -29,6 +29,7 @@
         {% elif active_page == 'settings' %}
             <a href="{{ url_for('home') }}" class="app-navbar__link">← Log Sheet</a>
         {% endif %}
+        <a href="{{ url_for('logout') }}" class="app-navbar__link app-navbar__link--logout">Log Out</a>
     </div>
 </nav>
 

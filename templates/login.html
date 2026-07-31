@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Newro Operations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body>
+
+<main class="login-card">
+    <img class="login-card__logo" src="{{ url_for('static', filename='img/logo-256.png') }}" alt="Newro Chicken">
+    <h1 class="login-card__title">Newro Operations</h1>
+    <p class="login-card__lead">Enter the system PIN to continue.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}<div class="alert alert-{{ category }}" data-ui-flash="{{ category }}">{{ message }}</div>{% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+        <input type="hidden" name="next" value="{{ next }}">
+        <label class="login-card__label" for="pin">System PIN</label>
+        <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="one-time-code" autofocus required>
+        <button type="submit">Login</button>
+    </form>
+</main>
+
+{% include 'ui_feedback.html' %}
+</body>
+</html>

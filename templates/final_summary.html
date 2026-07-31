@@ -7,6 +7,37 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/final_summary.css') }}">
+    <style>
+        /* Theme-blended component styling */
+        .yield-box {
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            transition: all 0.2s ease;
+        }
+
+        /* Night Shift Theme Integration */
+        .card-night .yield-box {
+            background: rgba(15, 23, 42, 0.04);
+            border: 1.5px solid var(--card-night-border, #1e293b);
+        }
+        .card-night .yield-box strong {
+            color: var(--card-night-title, #0f172a);
+        }
+
+        /* Day Shift Theme Integration */
+        .card-day .yield-box {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1.5px solid var(--card-day-border, #f59e0b);
+        }
+        .card-day .yield-box strong {
+            color: var(--card-day-title, #b45309);
+        }
+    </style>
 </head>
 <body>
 
@@ -34,124 +65,63 @@
             <div class="card card-night">
                 <h3>🌙 Night Shift Overview</h3>
                 <table class="stat-table">
-                    <tr><td>Before-Process Weight Total:</td><td>{{ "%.2f"|format(summary_input.night_before_weight if summary_input else 0.0) }} kg</td></tr>
-                    <tr><td>After-Process Birds Total:</td><td>{{ tot_night_after_birds }}</td></tr>
-                    <tr><td>After-Process Weight Total:</td><td>{{ "%.2f"|format(tot_night_after_weight) }} kg</td></tr>
-                    <tr><td>Yield Recovery:</td><td><span class="badge badge-green">{{ "%.2f"|format(night_yield_pct) }}%</span></td></tr>
-                    <tr><td>Processing Shrink Rate:</td><td><span class="badge badge-red">{{ "%.2f"|format(100 - night_yield_pct) if night_yield_pct > 0 else "0.00" }}%</span></td></tr>
-                    <tr><td>Avg Weight / Bird (Live):</td><td>{{ "%.2f"|format(night_avg_live_wt) }} kg</td></tr>
-                    <tr><td>Avg Weight / Bird (Processed):</td><td>{{ "%.2f"|format(night_avg_proc_wt) }} kg</td></tr>
+                    <tr>
+                        <td>Weight Difference:</td>
+                        <td>{{ "%.2f"|format((summary_input.night_before_weight if summary_input else 0.0) - tot_night_after_weight) }} kg</td>
+                    </tr>
+                    <tr>
+                        <td>Bird Difference:</td>
+                        <td>{{ (summary_input.night_before_birds if summary_input and summary_input.night_before_birds else 0) - tot_night_after_birds }}</td>
+                    </tr>
+                    <tr>
+                        <td>Avg Weight / Bird (Live):</td>
+                        <td>{{ "%.2f"|format(night_avg_live_wt) }} kg</td>
+                    </tr>
+                    <tr>
+                        <td>Avg Weight / Bird (Processed):</td>
+                        <td>{{ "%.2f"|format(night_avg_proc_wt) }} kg</td>
+                    </tr>
                 </table>
+
+                <!-- Night Yield Recovery Component -->
+                <div class="yield-box">
+                    <strong style="font-size: 0.95rem;">Night Yield Recovery:</strong>
+                    <span class="badge badge-green" style="font-size: 1.05rem; padding: 5px 12px; font-weight: bold;">{{ "%.2f"|format(night_yield_pct) }}%</span>
+                </div>
             </div>
 
             <!-- Day Shift Card -->
             <div class="card card-day">
                 <h3>☀️ Day Shift Overview</h3>
                 <table class="stat-table">
-                    <tr><td>Before-Process Weight Total:</td><td>{{ "%.2f"|format(summary_input.day_before_weight if summary_input else 0.0) }} kg</td></tr>
-                    <tr><td>After-Process Birds Total:</td><td>{{ tot_day_after_birds }}</td></tr>
-                    <tr><td>After-Process Weight Total:</td><td>{{ "%.2f"|format(tot_day_after_weight) }} kg</td></tr>
-                    <tr><td>Yield Recovery:</td><td><span class="badge badge-green">{{ "%.2f"|format(day_yield_pct) }}%</span></td></tr>
-                    <tr><td>Processing Shrink Rate:</td><td><span class="badge badge-red">{{ "%.2f"|format(100 - day_yield_pct) if day_yield_pct > 0 else "0.00" }}%</span></td></tr>
-                    <tr><td>Avg Weight / Bird (Live):</td><td>{{ "%.2f"|format(day_avg_live_wt) }} kg</td></tr>
-                    <tr><td>Avg Weight / Bird (Processed):</td><td>{{ "%.2f"|format(day_avg_proc_wt) }} kg</td></tr>
+                    <tr>
+                        <td>Weight Difference:</td>
+                        <td>{{ "%.2f"|format((summary_input.day_before_weight if summary_input else 0.0) - tot_day_after_weight) }} kg</td>
+                    </tr>
+                    <tr>
+                        <td>Bird Difference:</td>
+                        <td>{{ (summary_input.day_before_birds if summary_input and summary_input.day_before_birds else 0) - tot_day_after_birds }}</td>
+                    </tr>
+                    <tr>
+                        <td>Avg Weight / Bird (Live):</td>
+                        <td>{{ "%.2f"|format(day_avg_live_wt) }} kg</td>
+                    </tr>
+                    <tr>
+                        <td>Avg Weight / Bird (Processed):</td>
+                        <td>{{ "%.2f"|format(day_avg_proc_wt) }} kg</td>
+                    </tr>
                 </table>
-            </div>
-        </div>
 
-        <div style="background: #F1FBE3; border: 1px solid #DBF5A2; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-            <strong style="color: #29591D; font-size: 0.9rem;">Grand Overall Yield Recovery:</strong>
-            <span class="badge badge-green" style="font-size: 0.85rem;">{{ "%.2f"|format(grand_yield_pct) }}%</span>
-        </div>
-
-        <h3 style="margin-top: 10px; margin-bottom: 6px; font-size: 0.95rem;">Finished Products Breakdown</h3>
-
-        <!-- BREAKDOWN TABLES -->
-        <div class="grid-2">
-            <!-- Night Shift Breakdown -->
-            <div class="card card-night">
-                <h3>🌙 Night Shift Items</h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th class="num">Birds</th>
-                            <th class="num">Weight (kg)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set night_count = namespace(value=0) %}
-                        {% for item in product_summary_list %}
-                            {% if item.night_birds > 0 or item.night_weight > 0 %}
-                                {% set night_count.value = night_count.value + 1 %}
-                                <tr>
-                                    <td><strong>{{ item.code }}</strong> - {{ item.name }}</td>
-                                    <td class="num">{{ item.night_birds }}</td>
-                                    <td class="num">{{ "%.2f"|format(item.night_weight) }}</td>
-                                </tr>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if night_count.value == 0 %}
-                            <tr>
-                                <td colspan="3" style="text-align: center; color: var(--muted-text);">No items produced in Night Shift.</td>
-                            </tr>
-                        {% else %}
-                            <tr class="total-row">
-                                <td>NIGHT SHIFT TOTAL</td>
-                                <td class="num">{{ tot_night_after_birds }}</td>
-                                <td class="num">{{ "%.2f"|format(tot_night_after_weight) }}</td>
-                            </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Day Shift Breakdown -->
-            <div class="card card-day">
-                <h3>☀️ Day Shift Items</h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th class="num">Birds</th>
-                            <th class="num">Weight (kg)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set day_count = namespace(value=0) %}
-                        {% for item in product_summary_list %}
-                            {% if item.day_birds > 0 or item.day_weight > 0 %}
-                                {% set day_count.value = day_count.value + 1 %}
-                                <tr>
-                                    <td><strong>{{ item.code }}</strong> - {{ item.name }}</td>
-                                    <td class="num">{{ item.day_birds }}</td>
-                                    <td class="num">{{ "%.2f"|format(item.day_weight) }}</td>
-                                </tr>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if day_count.value == 0 %}
-                            <tr>
-                                <td colspan="3" style="text-align: center; color: var(--muted-text);">No items produced in Day Shift.</td>
-                            </tr>
-                        {% else %}
-                            <tr class="total-row">
-                                <td>DAY SHIFT TOTAL</td>
-                                <td class="num">{{ tot_day_after_birds }}</td>
-                                <td class="num">{{ "%.2f"|format(tot_day_after_weight) }}</td>
-                            </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
+                <!-- Day Yield Recovery Component -->
+                <div class="yield-box">
+                    <strong style="font-size: 0.95rem;">Day Yield Recovery:</strong>
+                    <span class="badge badge-green" style="font-size: 1.05rem; padding: 5px 12px; font-weight: bold;">{{ "%.2f"|format(day_yield_pct) }}%</span>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
-        // PDF Export — the page is sized to match the rendered content's own height
-        // (instead of a fixed A4 page), so everything always lands on exactly one
-        // page with no forced page-break gaps, no matter how long the product list is.
         async function downloadPDF() {
             const element = document.getElementById('pdfContent');
             const selectedDate = "{{ selected_date }}";
@@ -173,7 +143,7 @@
                 const imgData = canvas.toDataURL('image/jpeg', 0.98);
 
                 const marginMm = 5;
-                const pageWidthMm = 210; // A4 width, kept for a familiar printable size
+                const pageWidthMm = 210; 
                 const contentWidthMm = pageWidthMm - marginMm * 2;
                 const contentHeightMm = (canvas.height * contentWidthMm) / canvas.width;
                 const pageHeightMm = contentHeightMm + marginMm * 2;

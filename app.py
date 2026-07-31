@@ -1,16 +1,29 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import hmac
 import os
 
 # 1. Initialize Flask App first so @app decorators work
 app = Flask(__name__)
-app.secret_key = 'poultry_secret_key'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'poultry_secret_key')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///newro_poultry.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+# Session PIN gate: 30 minutes of inactivity logs the terminal out.
+# SESSION_REFRESH_EACH_REQUEST (Flask default: True) makes this a sliding
+# idle timeout rather than a fixed 30 minutes from login.
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+
+# Endpoints reachable without being logged in.
+PUBLIC_ENDPOINTS = {'login', 'static'}
+
+def is_safe_redirect_target(target):
+    """Only allow same-site relative redirects for the post-login `next` param."""
+    return bool(target) and target.startswith('/') and not target.startswith('//')
 
 # --- MODELS ---
 
@@ -127,6 +140,42 @@ with app.app_context():
     db.create_all()
     seed_products()
     get_system_pin()
+
+@app.before_request
+def require_login():
+    if request.endpoint in PUBLIC_ENDPOINTS or request.endpoint is None:
+        return
+    if not session.get('authenticated'):
+        next_target = request.full_path if request.query_string else request.path
+        return redirect(url_for('login', next=next_target))
+
+# --- AUTH ROUTES ---
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    next_url = request.values.get('next', '')
+    if not is_safe_redirect_target(next_url):
+        next_url = ''
+
+    if request.method == 'POST':
+        if verify_system_pin(request.form.get('pin')):
+            session.clear()
+            session['authenticated'] = True
+            session.permanent = True
+            return redirect(next_url or url_for('home'))
+        flash("Incorrect PIN. Please try again.", "danger")
+        return redirect(url_for('login', next=next_url))
+
+    if session.get('authenticated'):
+        return redirect(next_url or url_for('home'))
+
+    return render_template('login.html', next=next_url)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("You have been logged out.", "success")
+    return redirect(url_for('login'))
 
 # --- MAIN ROUTES ---
 
