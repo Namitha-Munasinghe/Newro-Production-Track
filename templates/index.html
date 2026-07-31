@@ -237,14 +237,14 @@
         </div>
     </div>
 
-    <!-- PRE-CALCULATE LOGGED ITEMS COUNT -->
-    {% set logged_count = namespace(value=0) %}
+    <!-- PRE-CALCULATE LOGGED ITEMS LIST -->
+    {% set logged_items = [] %}
     {% for product in products %}
         {% set item = existing_logs.get(product.id, {}) if existing_logs else {} %}
         {% set has_day = (item.day_birds and item.day_birds != 0) or (item.day_weight and item.day_weight != 0) %}
         {% set has_night = (item.night_birds and item.night_birds != 0) or (item.night_weight and item.night_weight != 0) %}
         {% if has_day or has_night %}
-            {% set logged_count.value = logged_count.value + 1 %}
+            {% set _ = logged_items.append({'product': product, 'item': item}) %}
         {% endif %}
     {% endfor %}
 
@@ -253,7 +253,6 @@
         <thead>
             <tr>
                 <th rowspan="2" style="width: 40%; vertical-align: middle;">Product Description</th>
-                <!-- Swapped Order: Night Shift Left, Day Shift Right -->
                 <th colspan="2" class="header-main" style="width: 30%;">Night Shift</th>
                 <th colspan="2" class="header-main" style="width: 30%;">Day Shift</th>
             </tr>
@@ -266,26 +265,22 @@
         </thead>
         <tbody id="product-rows">
             
-            {% if logged_count.value > 0 %}
+            {% if logged_items|length > 0 %}
                 <!-- LOOP THROUGH LOGGED PRODUCTS -->
-                {% for product in products %}
-                    {% set item = existing_logs.get(product.id, {}) if existing_logs else {} %}
-                    {% set has_day = (item.day_birds and item.day_birds != 0) or (item.day_weight and item.day_weight != 0) %}
-                    {% set has_night = (item.night_birds and item.night_birds != 0) or (item.night_weight and item.night_weight != 0) %}
-
-                    {% if has_day or has_night %}
+                {% for entry in logged_items %}
+                    {% set product = entry.product %}
+                    {% set item = entry.item %}
                     <tr class="product-row">
                         <td class="product-text"><strong>{{ product.code }}</strong> - {{ product.name }}</td>
 
-                        <!-- Night Shift Data (Moved to Left) -->
+                        <!-- Night Shift Data -->
                         <td>{{ item.night_birds if item.night_birds and item.night_birds != 0 else '-' }}</td>
                         <td>{{ '%.2f'|format(item.night_weight) if item.night_weight and item.night_weight != 0 else '-' }}</td>
 
-                        <!-- Day Shift Data (Moved to Right) -->
+                        <!-- Day Shift Data -->
                         <td>{{ item.day_birds if item.day_birds and item.day_birds != 0 else '-' }}</td>
                         <td>{{ '%.2f'|format(item.day_weight) if item.day_weight and item.day_weight != 0 else '-' }}</td>
                     </tr>
-                    {% endif %}
                 {% endfor %}
             {% else %}
                 <!-- IN-TABLE EMPTY STATE -->
@@ -301,7 +296,7 @@
             {% endif %}
 
             <tr class="total-row">
-                <td>Total</td>
+                <td>Total (<span id="total-product-count">0</span> products)</td>
                 <td id="total-night-birds">0</td>
                 <td id="total-night-weight">0.00</td>
                 <td id="total-day-birds">0</td>
@@ -316,7 +311,7 @@
         <a href="/summary?date={{ current_date }}" class="btn-summary">📊 View Summary</a>
 
         <!-- CIRCULAR DELETE BUTTON POSITIONED ON THE RIGHT CORNER -->
-        {% if logged_count.value > 0 %}
+        {% if logged_items|length > 0 %}
             <form method="POST" action="/log/delete" style="display: inline; margin: 0;" onsubmit="return confirmDelete('{{ current_date }}')">
                 <input type="hidden" name="date" value="{{ current_date }}">
                 <button type="submit" class="btn-delete-icon" title="Clear/Delete logs for {{ current_date }}">
@@ -350,12 +345,14 @@
         });
     }
 
-    // Calculate Totals for visible rows (Updated indexes: 1 & 2 = Night, 3 & 4 = Day)
+    // Calculate Totals for visible rows (Indexes: 1 & 2 = Night, 3 & 4 = Day)
     function calculateTotals() {
         let dayBirds = 0, dayWeight = 0, nightBirds = 0, nightWeight = 0;
+        let visibleCount = 0;
 
         document.querySelectorAll('.product-row').forEach(row => {
             if (row.style.display !== 'none') {
+                visibleCount++;
                 const cells = row.querySelectorAll('td');
                 const nB = parseInt(cells[1].innerText);
                 const nW = parseFloat(cells[2].innerText);
@@ -369,11 +366,13 @@
             }
         });
 
+        const elProductCount = document.getElementById('total-product-count');
         const elDayBirds = document.getElementById('total-day-birds');
         const elNightBirds = document.getElementById('total-night-birds');
         const elDayWeight = document.getElementById('total-day-weight');
         const elNightWeight = document.getElementById('total-night-weight');
 
+        if (elProductCount) elProductCount.innerText = visibleCount;
         if (elDayBirds) elDayBirds.innerText = dayBirds;
         if (elNightBirds) elNightBirds.innerText = nightBirds;
         if (elDayWeight) elDayWeight.innerText = dayWeight.toFixed(2);
