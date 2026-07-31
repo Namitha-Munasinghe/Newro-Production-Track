@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
 
+# 1. Initialize Flask App first so @app decorators work
 app = Flask(__name__)
 app.secret_key = 'poultry_secret_key'
 
@@ -109,7 +110,6 @@ def home():
     products = Product.query.order_by(Product.code).all()
     logs = EntryLog.query.filter_by(date=entry_date).all()
     
-    # Aggregate entries per product for display
     existing_logs = {}
     for log in logs:
         if log.product_id not in existing_logs:
@@ -134,10 +134,6 @@ def batch_entry():
 
 @app.route('/api/get-saved-batches', methods=['GET'])
 def get_saved_batches():
-    """
-    Retrieves all batch entries for a given date and shift from SQLite.
-    Structures data by product ID for easy front-end parsing.
-    """
     selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
     shift = request.args.get('shift', 'day')
 
@@ -145,7 +141,6 @@ def get_saved_batches():
         entry_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
         logs = EntryLog.query.filter_by(date=entry_date, shift=shift).all()
 
-        # Group individual entry rows by product_id
         grouped_entries = {}
         for log in logs:
             if log.product_id not in grouped_entries:
@@ -156,7 +151,6 @@ def get_saved_batches():
                 'weight': log.weight if log.weight is not None else ''
             })
 
-        # Format as list of product batch objects
         entries = [
             {'product_id': p_id, 'batches': batches}
             for p_id, batches in grouped_entries.items()
@@ -184,14 +178,12 @@ def save_batches():
             product_id = entry.get('product_id')
             batches = entry.get('batches', [])
 
-            # Clear existing logs for this product/date/shift before saving new batch rows
             EntryLog.query.filter_by(date=entry_date, shift=shift, product_id=product_id).delete()
 
             for b in batches:
                 raw_birds = b.get('birds')
                 raw_weight = b.get('weight')
                 
-                # Helper conversions to properly format data types or nulls
                 birds_val = int(raw_birds) if raw_birds not in (None, '', 'null') else None
                 weight_val = float(raw_weight) if raw_weight not in (None, '', 'null') else None
 
@@ -215,7 +207,6 @@ def save_batches():
 
 @app.route('/products', methods=['GET', 'POST'])
 def products_manager():
-    # Retrieve date query param or fall back to today's date
     selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
     if request.method == 'POST':
@@ -232,7 +223,6 @@ def products_manager():
         return redirect(url_for('products_manager', date=selected_date_str))
 
     all_products = Product.query.order_by(Product.code).all()
-    # Pass current_date to render_template so navbar can read it
     return render_template('products.html', products=all_products, current_date=selected_date_str)
 
 @app.route('/products/edit/<int:id>', methods=['POST'])
@@ -301,7 +291,6 @@ def summary():
     products = Product.query.order_by(Product.code).all()
     logs = EntryLog.query.filter_by(date=query_date).all()
 
-    # Aggregate batch sums per product for summary calculations
     log_map = {}
     for log in logs:
         if log.product_id not in log_map:
@@ -382,6 +371,92 @@ def summary():
         grand_after_birds=grand_after_birds,
         grand_after_weight=grand_after_weight,
         grand_yield_pct=grand_yield_pct
+    )
+
+@app.route('/final-summary', methods=['GET'])
+def final_summary():
+    selected_date = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    query_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+
+    summary_input = ShiftSummaryInput.query.filter_by(date=selected_date).first()
+    products = Product.query.order_by(Product.code).all()
+    logs = EntryLog.query.filter_by(date=query_date).all()
+
+    log_map = {}
+    for log in logs:
+        if log.product_id not in log_map:
+            log_map[log.product_id] = {'day_birds': 0, 'day_weight': 0.0, 'night_birds': 0, 'night_weight': 0.0}
+        
+        if log.shift == 'day':
+            log_map[log.product_id]['day_birds'] += (log.birds or 0)
+            log_map[log.product_id]['day_weight'] += (log.weight or 0.0)
+        elif log.shift == 'night':
+            log_map[log.product_id]['night_birds'] += (log.birds or 0)
+            log_map[log.product_id]['night_weight'] += (log.weight or 0.0)
+
+    product_summary_list = []
+    tot_day_after_birds = 0
+    tot_day_after_weight = 0.0
+    tot_night_after_birds = 0
+    tot_night_after_weight = 0.0
+
+    for p in products:
+        p_data = log_map.get(p.id, {'day_birds': 0, 'day_weight': 0.0, 'night_birds': 0, 'night_weight': 0.0})
+
+        d_birds = p_data['day_birds']
+        d_weight = p_data['day_weight']
+        n_birds = p_data['night_birds']
+        n_weight = p_data['night_weight']
+
+        tot_day_after_birds += d_birds
+        tot_day_after_weight += d_weight
+        tot_night_after_birds += n_birds
+        tot_night_after_weight += n_weight
+
+        product_summary_list.append({
+            'code': p.code,
+            'name': p.name,
+            'day_birds': d_birds,
+            'day_weight': d_weight,
+            'night_birds': n_birds,
+            'night_weight': n_weight,
+            'total_birds': d_birds + n_birds,
+            'total_weight': d_weight + n_weight
+        })
+
+    day_before_wt = summary_input.day_before_weight if summary_input else 0.0
+    day_before_birds = summary_input.day_before_birds if summary_input else 0
+    night_before_wt = summary_input.night_before_weight if summary_input else 0.0
+    night_before_birds = summary_input.night_before_birds if summary_input else 0
+
+    day_yield_pct = (tot_day_after_weight / day_before_wt * 100) if day_before_wt > 0 else 0.0
+    day_avg_live_wt = (day_before_wt / day_before_birds) if day_before_birds > 0 else 0.0
+    day_avg_proc_wt = (tot_day_after_weight / tot_day_after_birds) if tot_day_after_birds > 0 else 0.0
+
+    night_yield_pct = (tot_night_after_weight / night_before_wt * 100) if night_before_wt > 0 else 0.0
+    night_avg_live_wt = (night_before_wt / night_before_birds) if night_before_birds > 0 else 0.0
+    night_avg_proc_wt = (tot_night_after_weight / tot_night_after_birds) if tot_night_after_birds > 0 else 0.0
+
+    grand_before_wt = night_before_wt + day_before_wt
+    grand_after_wt = tot_night_after_weight + tot_day_after_weight
+    grand_yield_pct = (grand_after_wt / grand_before_wt * 100) if grand_before_wt > 0 else 0.0
+
+    return render_template(
+        'final_summary.html',
+        selected_date=selected_date,
+        summary_input=summary_input,
+        product_summary_list=product_summary_list,
+        tot_night_after_birds=tot_night_after_birds,
+        tot_night_after_weight=tot_night_after_weight,
+        tot_day_after_birds=tot_day_after_birds,
+        tot_day_after_weight=tot_day_after_weight,
+        night_yield_pct=night_yield_pct,
+        day_yield_pct=day_yield_pct,
+        grand_yield_pct=grand_yield_pct,
+        night_avg_live_wt=night_avg_live_wt,
+        night_avg_proc_wt=night_avg_proc_wt,
+        day_avg_live_wt=day_avg_live_wt,
+        day_avg_proc_wt=day_avg_proc_wt
     )
 
 @app.route('/summary/delete', methods=['POST'])

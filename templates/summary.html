@@ -57,12 +57,11 @@
         h2, h3 { color: var(--text-color); }
         h2 { margin-top: 0; font-size: 1.25rem; font-weight: 650; }
 
-        /* Date Picker Component dynamic color states */
         .date-picker-bar {
-            padding: 15px;
+            padding: 12px 15px;
             border: 1px solid #cfe5ff; 
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -76,12 +75,12 @@
         }
 
         .date-picker-bar.is-today {
-            background-color: #e6f4ea !important; /* Green for today */
+            background-color: #e6f4ea !important;
             border-color: #a8dab5 !important;
         }
 
         .date-picker-bar.is-not-today {
-            background-color: #fff8e1 !important; /* Yellow for other dates */
+            background-color: #fff8e1 !important;
             border-color: #ffe082 !important;
         }
 
@@ -100,83 +99,79 @@
             opacity: 0.75;
         }
 
-        /* Dedicated Section Component for Inputs */
         .input-section-card {
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 20px;
+            padding: 15px 20px;
             background: var(--card-bg);
-            margin-bottom: 24px;
+            margin-bottom: 18px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
         }
 
         .input-section-header {
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
         .input-section-header h3 { margin: 0; font-size: 1.05rem; }
 
-        /* Centered Action Button Wrapper */
         .calc-btn-wrapper {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 12px;
-            margin-top: 10px;
+            margin-top: 5px;
         }
 
-        .grid-2 { display: flex; gap: 16px; margin-bottom: 16px; }
+        .grid-2 { display: flex; gap: 16px; margin-bottom: 12px; }
         .card {
             flex: 1;
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 18px;
+            padding: 14px 18px;
             background: var(--card-bg);
         }
 
-        /* Shift Colors & Night-First Ordering */
         .card-night { border-top: 3px solid var(--info, #17a2b8); }
         .card-day { border-top: 3px solid var(--warning, #ffc107); }
-        .card h3 { margin-top: 0; font-size: 0.9rem; font-weight: 650; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .card h3 { margin-top: 0; font-size: 0.9rem; font-weight: 650; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px; }
 
-        .form-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 8px; }
         .form-group { flex: 1; }
-        .form-group label { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 5px; color: var(--muted-text); }
+        .form-group label { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; color: var(--muted-text); }
         .form-group input { width: 100%; box-sizing: border-box; }
 
-        .stat-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .stat-table td { padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 0.9em; }
+        .stat-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .stat-table td { padding: 4px 0; border-bottom: 1px solid var(--border-color); font-size: 0.85em; }
         .stat-table td:last-child { text-align: right; font-weight: bold; }
 
-        .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
         .badge-green { background: rgba(40, 167, 69, 0.12); color: #1d6d32; }
         .badge-red { background: rgba(220, 53, 69, 0.12); color: #a71d2a; }
 
         body.dark-mode .badge-green { background-color: #1e4620; color: #a3e635; }
         body.dark-mode .badge-red { background-color: #4a151b; color: #f87171; }
 
-        table.data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table.data-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
         table.data-table th, table.data-table td {
             border: 1px solid var(--border-color);
-            padding: 8px 10px;
-            font-size: 0.9em;
+            padding: 6px 8px;
+            font-size: 0.85em;
         }
         table.data-table th { background-color: var(--header-bg); text-align: left; }
         table.data-table td.num, table.data-table th.num { text-align: right; }
         table.data-table tr:nth-child(even) { background-color: var(--alt-row-bg); }
         .total-row td { background-color: var(--total-row-bg); font-weight: bold; }
 
-        /* Buttons */
         .btn-calc-save {
-            background-color: #28a745; /* Green color for Save button */
+            background-color: #28a745;
             color: white;
-            padding: 10px 24px;
+            padding: 8px 20px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 1em;
+            font-size: 0.95em;
             font-weight: bold;
             width: fit-content;
             display: inline-flex;
@@ -194,50 +189,63 @@
             background-color: #6f42c1;
             color: white;
             border: none;
-            padding: 6px 14px;
+            padding: 5px 12px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: bold;
         }
 
         .btn-discard {
             background-color: #6c757d;
             color: white;
-            padding: 10px 20px;
+            padding: 8px 18px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 1em;
+            font-size: 0.95em;
             font-weight: bold;
             width: fit-content;
         }
 
         .action-row {
             display: flex;
-            justify-content: flex-end;
-            margin-top: 25px;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .btn-summary-view {
+            background-color: #17a2b8;
+            color: white;
+            padding: 9px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
         }
 
         .btn-delete {
             background-color: var(--danger, #dc3545);
             color: white;
-            padding: 10px 20px;
+            padding: 9px 18px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.95em;
+            font-size: 0.9em;
             font-weight: bold;
         }
 
         input:focus { outline: none; border-color: #28a745 !important; box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15); }
-        .btn-calc-save, .btn-delete, .btn-edit, .btn-discard { transition: filter 0.2s ease, transform 0.2s ease; }
-        .btn-calc-save:hover:not(:disabled), .btn-delete:hover, .btn-edit:hover, .btn-discard:hover { filter: brightness(0.93); transform: translateY(-1px); }
-        table.data-table tbody tr { transition: background 0.15s ease; }
-        table.data-table tbody tr:hover { background: var(--picker-bg); }
-        .alert { padding: 10px 12px; background: rgba(40, 167, 69, 0.12); color: #1d6d32; border-radius: 6px; margin-bottom: 15px; font-weight: 600; }
-        @media (max-width: 700px) { .container { margin: 0 12px 24px; padding: 18px; } .grid-2, .form-row, .date-picker-bar, .action-row { flex-direction: column; } table.data-table { display: block; overflow-x: auto; } }
-        body.dark-mode .alert { background-color: #1e4620; color: #a3e635; }
+        .btn-calc-save, .btn-delete, .btn-edit, .btn-discard, .btn-summary-view { transition: filter 0.2s ease, transform 0.2s ease; }
+        .btn-calc-save:hover:not(:disabled), .btn-delete:hover, .btn-edit:hover, .btn-discard:hover, .btn-summary-view:hover { filter: brightness(0.93); transform: translateY(-1px); }
+        .alert { padding: 8px 12px; background: rgba(40, 167, 69, 0.12); color: #1d6d32; border-radius: 6px; margin-bottom: 12px; font-weight: 600; }
+        @media (max-width: 700px) { .container { margin: 0 12px 24px; padding: 18px; } .grid-2, .form-row, .date-picker-bar, .action-row { flex-direction: column; gap: 10px; } table.data-table { display: block; overflow-x: auto; } }
     </style>
 </head>
 <body>
@@ -245,9 +253,10 @@
 {% set active_page = 'summary' %}
 {% set navbar_title = 'Daily Summary & Reconciliation' %}
 {% include 'navbar.html' %}
+
 <main class="container">
     <h2>Daily Shift Summary & Reconciliation</h2>
-    <hr style="border-color: var(--border-color);">
+    <hr style="border-color: var(--border-color); margin-bottom: 15px;">
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
@@ -255,12 +264,10 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Date Picker Bar Component -->
     <div class="date-picker-bar" id="datePickerComponent">
         <form method="GET" action="/summary" class="date-picker-form">
             <label for="date"><strong>Selected Date:</strong></label>
             <input type="date" id="date" name="date" value="{{ selected_date }}" onchange="this.form.submit()">
-            <!-- EDIT BUTTON POSITIONED DIRECTLY NEXT TO DATE PICKER -->
             <button type="button" class="btn-edit" id="editToggleBtn" style="display: none;" onclick="enableEditing()">✏️ Edit Summary</button>
         </form>
         <div>
@@ -269,18 +276,15 @@
         </div>
     </div>
 
-    <!-- MAIN SUMMARY FORM -->
     <form method="POST" action="/summary" id="summaryForm">
         <input type="hidden" name="date" value="{{ selected_date }}">
 
-        <!-- BEFORE-PROCESSING INPUT COMPONENT -->
         <div class="input-section-card">
             <div class="input-section-header">
                 <h3>📋 Enter Before-Processing Values</h3>
             </div>
 
             <div class="grid-2" style="margin-bottom: 0;">
-                <!-- Night Shift Input (First Shift - Left Side) -->
                 <div class="card card-night">
                     <h3>🌙 Night Shift (Live Input)</h3>
                     <div class="form-row">
@@ -295,7 +299,6 @@
                     </div>
                 </div>
 
-                <!-- Day Shift Input (Second Shift - Right Side) -->
                 <div class="card card-day">
                     <h3>☀️ Day Shift (Live Input)</h3>
                     <div class="form-row">
@@ -311,7 +314,6 @@
                 </div>
             </div>
 
-            <!-- COMBINED GREEN SAVE / DISCARD BUTTONS -->
             <div class="calc-btn-wrapper">
                 <button type="submit" class="btn-calc-save" id="saveCalcBtn" onclick="return handleCalculateAndSave(event)">
                     💾 Save
@@ -322,9 +324,7 @@
             </div>
         </div>
 
-        <!-- CALCULATIONS DISPLAY SECTION -->
         <div class="grid-2">
-            <!-- Night Shift Calculation Card (Left Side) -->
             <div class="card card-night">
                 <h3>🌙 Night Shift Summary</h3>
                 <table class="stat-table">
@@ -337,7 +337,6 @@
                 </table>
             </div>
 
-            <!-- Day Shift Calculation Card (Right Side) -->
             <div class="card card-day">
                 <h3>☀️ Day Shift Summary</h3>
                 <table class="stat-table">
@@ -351,13 +350,9 @@
             </div>
         </div>
 
-        <br>
-        <h3>Finished Products Breakdown</h3>
+        <h3 style="margin-top: 12px; margin-bottom: 8px;">Finished Products Breakdown</h3>
 
-        <!-- BREAKDOWN TABLES (Night Shift Left, Day Shift Right) -->
         <div class="grid-2">
-
-            <!-- Night Shift Breakdown (Left Side) -->
             <div class="card card-night">
                 <h3>🌙 Night Shift Items</h3>
                 <table class="data-table">
@@ -396,7 +391,6 @@
                 </table>
             </div>
 
-            <!-- Day Shift Breakdown (Right Side) -->
             <div class="card card-day">
                 <h3>☀️ Day Shift Items</h3>
                 <table class="data-table">
@@ -434,18 +428,16 @@
                     </tbody>
                 </table>
             </div>
-
         </div>
 
-        <!-- ACTION ROW: DELETE ONLY -->
+        <!-- UPDATED ACTION ROW: SEE FINAL SUMMARY BUTTON -->
         <div class="action-row">
+            <a href="#" id="seeFinalSummaryBtn" class="btn-summary-view" onclick="redirectToFinalSummary(event)">👁️ See Final Summary</a>
             <button type="submit" class="btn-delete" formaction="/summary/delete" onclick="return confirmDelete('{{ selected_date }}')">🗑️ Delete Summary</button>
         </div>
     </form>
-
 </main>
 
-<!-- JavaScript Logic -->
 <script>
     function confirmDelete(dateStr) {
         return confirm(`Are you sure you want to delete the summary data for ${dateStr}? This action cannot be undone.`);
@@ -459,7 +451,12 @@
     let initialValues = {};
     let isTodayDate = false;
 
-    // Checks Date Bar (Green for Today, Yellow for other dates) & Toggles Editable state
+    function redirectToFinalSummary(e) {
+        e.preventDefault();
+        const selectedDate = document.getElementById('date').value || '{{ selected_date }}';
+        window.location.href = `/final-summary?date=${selectedDate}`;
+    }
+
     function setupDateAndModeState() {
         const dateInput = document.getElementById('date');
         const pickerBar = document.getElementById('datePickerComponent');
@@ -475,7 +472,6 @@
 
         isTodayDate = (selectedDateStr === todayStr);
 
-        // Store initial input values to restore if user discards
         initialValues = {
             nightBirds: document.getElementById('night_b_birds').value,
             nightWeight: document.getElementById('night_b_weight').value,
@@ -523,7 +519,6 @@
         document.getElementById('editToggleBtn').style.display = 'none';
     }
 
-    // Discard Edits with Are You Sure Confirmation
     function discardEdits() {
         const confirmed = confirm("Are you sure you want to discard your changes?");
         if (!confirmed) return;
@@ -538,7 +533,6 @@
         document.getElementById('editToggleBtn').style.display = 'inline-block';
     }
 
-    // Mathematical calculations
     function calculateSummary() {
         const dayBeforeBirds = parseFloat(document.getElementById('day_b_birds').value) || 0;
         const dayBeforeWeight = parseFloat(document.getElementById('day_b_weight').value) || 0;
@@ -546,24 +540,20 @@
         const nightBeforeBirds = parseFloat(document.getElementById('night_b_birds').value) || 0;
         const nightBeforeWeight = parseFloat(document.getElementById('night_b_weight').value) || 0;
 
-        // Day Calculations
         const dayYield = dayBeforeWeight > 0 ? (totDayAfterWeight / dayBeforeWeight * 100) : 0;
         const dayShrink = dayBeforeWeight > 0 ? (100 - dayYield) : 0;
         const dayAvgLive = dayBeforeBirds > 0 ? (dayBeforeWeight / dayBeforeBirds) : 0;
         const dayAvgProc = totDayAfterBirds > 0 ? (totDayAfterWeight / totDayAfterBirds) : 0;
 
-        // Night Calculations
         const nightYield = nightBeforeWeight > 0 ? (totNightAfterWeight / nightBeforeWeight * 100) : 0;
         const nightShrink = nightBeforeWeight > 0 ? (100 - nightYield) : 0;
         const nightAvgLive = nightBeforeBirds > 0 ? (nightBeforeWeight / nightBeforeBirds) : 0;
         const nightAvgProc = totNightAfterBirds > 0 ? (totNightAfterWeight / totNightAfterBirds) : 0;
 
-        // Grand Overall Calculations
         const grandBeforeWeight = dayBeforeWeight + nightBeforeWeight;
         const grandAfterWeight = totDayAfterWeight + totNightAfterWeight;
         const grandYield = grandBeforeWeight > 0 ? (grandAfterWeight / grandBeforeWeight * 100) : 0;
 
-        // Update UI Displays
         document.getElementById('day_yield_display').innerText = dayYield.toFixed(2) + '%';
         document.getElementById('day_shrink_display').innerText = dayShrink.toFixed(2) + '%';
         document.getElementById('day_avg_live_display').innerText = dayAvgLive.toFixed(2) + ' kg';
@@ -577,17 +567,16 @@
         document.getElementById('grand_yield_display').innerText = grandYield.toFixed(2) + '%';
     }
 
-    // Handles Calculate & Form Save with Are You Sure Confirmation
     function handleCalculateAndSave(event) {
         const selectedDate = document.getElementById('date').value;
         const confirmed = confirm(`Are you sure you want to calculate and save the summary for ${selectedDate}?`);
         
         if (!confirmed) {
-            return false; // Prevents form submission
+            return false;
         }
 
-        calculateSummary(); // Recalculates latest values on client-side before submit
-        return true; // Proceed with form submit
+        calculateSummary();
+        return true;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
