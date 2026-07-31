@@ -128,3 +128,11 @@
         .btn-pdf:hover { background-color: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.35); }
         .btn-back:hover { filter: brightness(0.92); transform: translateY(-1px); }
         .btn-pdf:active, .btn-back:active { transform: translateY(0) scale(0.97); }
+
+        @media (max-width: 700px) {
+            .pdf-page-wrapper { margin: 0 12px; padding: 18px; }
+            .top-action-bar { margin: 0 12px 15px; }
+            .grid-2 { flex-direction: column; }
+            .report-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            table.data-table { display: block; overflow-x: auto; }
+        }

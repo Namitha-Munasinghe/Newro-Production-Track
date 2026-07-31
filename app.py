@@ -578,6 +578,72 @@ def final_summary():
         day_avg_proc_wt=day_avg_proc_wt
     )
 
+@app.route('/product-breakdown', methods=['GET'])
+def product_breakdown():
+    selected_date = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    query_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+
+    products = Product.query.order_by(Product.code).all()
+    logs = EntryLog.query.filter_by(date=query_date).all()
+
+    log_map = {}
+    for log in logs:
+        if log.product_id not in log_map:
+            log_map[log.product_id] = {'day_birds': 0, 'day_weight': 0.0, 'night_birds': 0, 'night_weight': 0.0}
+
+        if log.shift == 'day':
+            log_map[log.product_id]['day_birds'] += (log.birds or 0)
+            log_map[log.product_id]['day_weight'] += (log.weight or 0.0)
+        elif log.shift == 'night':
+            log_map[log.product_id]['night_birds'] += (log.birds or 0)
+            log_map[log.product_id]['night_weight'] += (log.weight or 0.0)
+
+    product_summary_list = []
+    tot_day_after_birds = 0
+    tot_day_after_weight = 0.0
+    tot_night_after_birds = 0
+    tot_night_after_weight = 0.0
+
+    for p in products:
+        p_data = log_map.get(p.id, {'day_birds': 0, 'day_weight': 0.0, 'night_birds': 0, 'night_weight': 0.0})
+
+        d_birds = p_data['day_birds']
+        d_weight = p_data['day_weight']
+        n_birds = p_data['night_birds']
+        n_weight = p_data['night_weight']
+
+        tot_day_after_birds += d_birds
+        tot_day_after_weight += d_weight
+        tot_night_after_birds += n_birds
+        tot_night_after_weight += n_weight
+
+        if d_birds or d_weight or n_birds or n_weight:
+            product_summary_list.append({
+                'code': p.code,
+                'name': p.name,
+                'day_birds': d_birds,
+                'day_weight': d_weight,
+                'night_birds': n_birds,
+                'night_weight': n_weight,
+                'total_birds': d_birds + n_birds,
+                'total_weight': d_weight + n_weight
+            })
+
+    grand_total_birds = tot_day_after_birds + tot_night_after_birds
+    grand_total_weight = tot_day_after_weight + tot_night_after_weight
+
+    return render_template(
+        'product_breakdown.html',
+        selected_date=selected_date,
+        product_summary_list=product_summary_list,
+        tot_day_after_birds=tot_day_after_birds,
+        tot_day_after_weight=tot_day_after_weight,
+        tot_night_after_birds=tot_night_after_birds,
+        tot_night_after_weight=tot_night_after_weight,
+        grand_total_birds=grand_total_birds,
+        grand_total_weight=grand_total_weight
+    )
+
 @app.route('/summary/delete', methods=['POST'])
 def delete_summary():
     selected_date = request.form.get('date')

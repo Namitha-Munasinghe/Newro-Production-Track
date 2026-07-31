@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finished Products Breakdown - {{ selected_date }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/product_breakdown.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- ACTION BAR ABOVE REPORT -->
+    <div class="top-action-bar">
+        <a href="/summary?date={{ selected_date }}" class="btn-back">← Back to Summary</a>
+        <button type="button" class="btn-pdf" id="btnDownloadPdf" onclick="downloadPDF()">📄 Download PDF</button>
+    </div>
+
+    <!-- MAIN PRINTABLE CANVAS AREA -->
+    <main class="pdf-page-wrapper" id="pdfContent">
+        <div class="report-header">
+            <div>
+                <h1>Finished Products Breakdown</h1>
+                <small>Night &amp; Day Shift Output by Product</small>
+            </div>
+            <div class="date-badge">
+                📅 Date: <strong>{{ selected_date }}</strong>
+            </div>
+        </div>
+
+        <div class="stat-strip">
+            <div class="stat-tile">
+                <div class="stat-label">Products Produced</div>
+                <div class="stat-value">{{ product_summary_list|length }}</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Total Birds</div>
+                <div class="stat-value">{{ grand_total_birds }}</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Total Weight (kg)</div>
+                <div class="stat-value">{{ "%.2f"|format(grand_total_weight) }}</div>
+            </div>
+        </div>
+
+        {% if product_summary_list|length > 0 %}
+        <table class="breakdown-table">
+            <thead>
+                <tr>
+                    <th class="col-product" rowspan="2">Product</th>
+                    <th colspan="2">🌙 Night Shift</th>
+                    <th colspan="2">☀️ Day Shift</th>
+                    <th colspan="2">Total</th>
+                </tr>
+                <tr>
+                    <th class="num">Birds</th>
+                    <th class="num">Weight (kg)</th>
+                    <th class="num">Birds</th>
+                    <th class="num">Weight (kg)</th>
+                    <th class="num">Birds</th>
+                    <th class="num">Weight (kg)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in product_summary_list %}
+                <tr>
+                    <td class="col-product"><strong>{{ item.code }}</strong> - {{ item.name }}</td>
+                    <td class="num">{{ item.night_birds if item.night_birds else '-' }}</td>
+                    <td class="num">{{ "%.2f"|format(item.night_weight) if item.night_weight else '-' }}</td>
+                    <td class="num">{{ item.day_birds if item.day_birds else '-' }}</td>
+                    <td class="num">{{ "%.2f"|format(item.day_weight) if item.day_weight else '-' }}</td>
+                    <td class="num"><strong>{{ item.total_birds }}</strong></td>
+                    <td class="num"><strong>{{ "%.2f"|format(item.total_weight) }}</strong></td>
+                </tr>
+                {% endfor %}
+                <tr class="total-row">
+                    <td>GRAND TOTAL</td>
+                    <td class="num">{{ tot_night_after_birds }}</td>
+                    <td class="num">{{ "%.2f"|format(tot_night_after_weight) }}</td>
+                    <td class="num">{{ tot_day_after_birds }}</td>
+                    <td class="num">{{ "%.2f"|format(tot_day_after_weight) }}</td>
+                    <td class="num">{{ grand_total_birds }}</td>
+                    <td class="num">{{ "%.2f"|format(grand_total_weight) }}</td>
+                </tr>
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty-note">No finished products were logged for {{ selected_date }}.</p>
+        {% endif %}
+    </main>
+
+    <script>
+        // PDF Export — page sized to match the rendered content's own height,
+        // so the breakdown always lands on exactly one page.
+        async function downloadPDF() {
+            const element = document.getElementById('pdfContent');
+            const selectedDate = "{{ selected_date }}";
+            const btn = document.getElementById('btnDownloadPdf');
+            if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+
+            const originalShadow = element.style.boxShadow;
+            element.style.boxShadow = 'none';
+
+            try {
+                // Force a fixed desktop-width layout for the capture, regardless of the
+                // viewer's actual browser/device width, so the PDF always looks the
+                // same instead of depending on how narrow the window happened to be.
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    scrollY: 0,
+                    scrollX: 0,
+                    windowWidth: 1050
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.98);
+
+                const marginMm = 5;
+                const pageWidthMm = 210; // A4 width
+                const contentWidthMm = pageWidthMm - marginMm * 2;
+                const contentHeightMm = (canvas.height * contentWidthMm) / canvas.width;
+                const pageHeightMm = contentHeightMm + marginMm * 2;
+
+                // jsPDF silently swaps a custom [w, h] format's dimensions to match
+                // a mismatched `orientation` — declare it correctly up front so it
+                // never swaps out from under the addImage() call below.
+                const orientation = pageWidthMm >= pageHeightMm ? 'landscape' : 'portrait';
+
+                const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+                const pdf = new JsPDF({
+                    unit: 'mm',
+                    format: [pageWidthMm, pageHeightMm],
+                    orientation
+                });
+
+                pdf.addImage(imgData, 'JPEG', marginMm, marginMm, contentWidthMm, contentHeightMm);
+                pdf.save(`Finished_Products_Breakdown_${selectedDate}.pdf`);
+            } finally {
+                element.style.boxShadow = originalShadow;
+                if (btn) { btn.disabled = false; btn.textContent = '📄 Download PDF'; }
+            }
+        }
+    </script>
+</body>
+</html>

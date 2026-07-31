@@ -191,7 +191,10 @@
 
         <!-- UPDATED ACTION ROW: SEE FINAL SUMMARY BUTTON -->
         <div class="action-row">
-            <a href="#" id="seeFinalSummaryBtn" class="btn-summary-view" onclick="redirectToFinalSummary(event)">👁️ See Final Summary</a>
+            <div class="action-row__left">
+                <a href="#" id="seeFinalSummaryBtn" class="btn-summary-view" onclick="redirectToFinalSummary(event)">👁️ See Final Summary</a>
+                <a href="#" id="viewBreakdownBtn" class="btn-breakdown-view" onclick="redirectToBreakdown(event)">📦 Product Breakdown</a>
+            </div>
             <button type="submit" class="btn-delete" formaction="/summary/delete" onclick="this.form.action = this.formAction; return SupervisorAuthorization.protectForm(this.form, 'Enter your supervisor PIN to delete summary data for {{ selected_date }}.')">🗑️ Delete Summary</button>
         </div>
     </form>
@@ -214,6 +217,12 @@
         e.preventDefault();
         const selectedDate = document.getElementById('date').value || '{{ selected_date }}';
         window.location.href = `/final-summary?date=${selectedDate}`;
+    }
+
+    function redirectToBreakdown(e) {
+        e.preventDefault();
+        const selectedDate = document.getElementById('date').value || '{{ selected_date }}';
+        window.location.href = `/product-breakdown?date=${selectedDate}`;
     }
 
     function setupDateAndModeState() {

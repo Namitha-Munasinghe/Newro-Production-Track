@@ -132,27 +132,40 @@
             element.style.boxShadow = 'none';
 
             try {
+                // Force a fixed desktop-width layout for the capture, regardless of the
+                // viewer's actual browser/device width — otherwise on a narrow window
+                // the two-column layout overflows instead of stacking, and html2canvas
+                // (which renders at the real window width) only captures what fits,
+                // silently cutting off everything past the left column. Only
+                // `windowWidth` is set (not `width`) so html2canvas measures the
+                // element's own resulting size at that layout rather than an assumed one.
                 const canvas = await html2canvas(element, {
                     scale: 2,
                     useCORS: true,
                     logging: false,
                     scrollY: 0,
-                    scrollX: 0
+                    scrollX: 0,
+                    windowWidth: 1050
                 });
 
                 const imgData = canvas.toDataURL('image/jpeg', 0.98);
 
                 const marginMm = 5;
-                const pageWidthMm = 210; 
+                const pageWidthMm = 210;
                 const contentWidthMm = pageWidthMm - marginMm * 2;
                 const contentHeightMm = (canvas.height * contentWidthMm) / canvas.width;
                 const pageHeightMm = contentHeightMm + marginMm * 2;
+
+                // jsPDF silently swaps a custom [w, h] format's dimensions to match
+                // a mismatched `orientation` — declare it correctly up front so it
+                // never swaps out from under the addImage() call below.
+                const orientation = pageWidthMm >= pageHeightMm ? 'landscape' : 'portrait';
 
                 const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
                 const pdf = new JsPDF({
                     unit: 'mm',
                     format: [pageWidthMm, pageHeightMm],
-                    orientation: 'portrait'
+                    orientation
                 });
 
                 pdf.addImage(imgData, 'JPEG', marginMm, marginMm, contentWidthMm, contentHeightMm);
