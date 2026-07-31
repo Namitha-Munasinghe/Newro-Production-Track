@@ -1,0 +1,296 @@
+        * { box-sizing: border-box; }
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: var(--page-bg); color: var(--text); font-size: 0.9rem; }
+        
+        /* Top Navigation Bar */
+        .top-bar {
+            background: var(--surface);
+            color: var(--text);
+            padding: 10px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .top-bar h2 { margin: 0; font-size: 0.9rem; font-weight: 650; }
+        .top-controls { display: flex; gap: 14px; align-items: center; }
+        
+        /* Shift Toggle Control */
+        .shift-toggle-container {
+            display: flex;
+            background: #eef1f4;
+            border: 1px solid var(--table-outline);
+            border-radius: 6px;
+            padding: 3px;
+        }
+        .shift-btn {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            padding: 6px 16px;
+            font-weight: 650;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease;
+        }
+        .shift-btn:hover:not(.active-day):not(.active-night) { background: rgba(var(--primary-rgb), 0.1); color: var(--text); }
+        .shift-btn:active { transform: scale(0.97); }
+        .shift-btn.active-day, .shift-btn.active-night { background: var(--primary); color: white; box-shadow: 0 1px 3px rgba(var(--primary-rgb), 0.3); }
+
+        /* Dynamic Date Picker Highlight Styles */
+        .date-picker-highlight {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 0.85rem;
+            outline: none;
+            transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+        }
+        .date-picker-highlight.is-today {
+            background-color: var(--accent-tint, #F1FBE3) !important;
+            border-color: var(--primary, #449430) !important;
+            color: var(--success-dark, #29591D) !important;
+        }
+        .date-picker-highlight.is-not-today {
+            background-color: #FDF3DC !important;
+            border-color: var(--edit, #EEBF49) !important;
+            color: #8A5A00 !important;
+        }
+
+        /* Edit Mode Action Buttons (Positioned to Left of Date Picker) */
+        .edit-controls-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-edit-mode {
+            background-color: var(--edit);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease;
+        }
+        .btn-edit-mode:hover { background-color: var(--edit-dark); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(var(--edit-rgb), 0.35); }
+        .btn-edit-mode:active { transform: translateY(0) scale(0.97); box-shadow: none; }
+
+        .btn-save-mode {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease;
+        }
+        .btn-save-mode:hover { background-color: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(var(--primary-rgb), 0.35); }
+        .btn-save-mode:active { transform: translateY(0) scale(0.97); box-shadow: none; }
+
+        .btn-revoke-mode {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease;
+        }
+        .btn-revoke-mode:hover { background-color: var(--danger-dark); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(var(--danger-rgb), 0.35); }
+        .btn-revoke-mode:active { transform: translateY(0) scale(0.97); box-shadow: none; }
+
+        /* Read-Only State Enforcement */
+        body.is-readonly input[type="number"],
+        body.is-readonly input[type="text"] {
+            background-color: #f5f7fa !important;
+            cursor: not-allowed !important;
+            border-color: #e2e8f0 !important;
+        }
+        body.is-readonly .btn-remove-row,
+        body.is-readonly .btn-delete-card,
+        body.is-readonly .btn-close-card,
+        body.is-readonly .btn-add-batch {
+            display: none !important;
+        }
+
+        /* Main Workspace Layout */
+        .dashboard-container {
+            display: flex;
+            height: calc(100vh - 113px);
+            overflow: hidden;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: 320px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 0.9em;
+        }
+        .product-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .product-item {
+            padding: 12px;
+            background: #fbfcfd;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        .product-item:hover { background: var(--surface-tint); border-color: var(--table-outline); transform: translateX(2px); }
+        .product-item.active-open { border-left: 3px solid var(--primary); background: var(--surface-tint); }
+        .product-item .badge { font-size: 0.7rem; background: rgba(var(--primary-rgb), 0.12); color: var(--success-dark); padding: 2px 6px; border-radius: 999px; display: none; }
+
+        /* Workspace */
+        .workspace {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--page-bg);
+        }
+        .workspace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* Product Card */
+        .product-card {
+            background: var(--surface);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .product-card:focus-within {
+            border-color: var(--primary);
+            box-shadow: var(--focus-ring);
+        }
+        .card-header {
+            background: var(--surface-tint);
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header h3 { margin: 0; font-size: 0.85rem; color: var(--text); font-weight: 650; }
+        .btn-close-card { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #7f8c8d; line-height: 1; padding: 0 4px; border-radius: 4px; transition: color 0.15s ease, transform 0.15s ease; }
+        .btn-close-card:hover { color: var(--danger); transform: scale(1.15); }
+        .btn-close-card:active { transform: scale(0.95); }
+
+        .card-body { padding: 15px; }
+        .batch-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; outline: 1px solid var(--table-outline); outline-offset: -1px; border-radius: 6px; overflow: hidden; }
+        .batch-table th, .batch-table td { padding: 6px; text-align: left; font-size: 0.85em; border-bottom: 1px solid var(--table-outline); }
+        .batch-table tr:last-child td { border-bottom: 0; }
+        .batch-table th { background: #f8fafc; color: var(--muted); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; }
+        
+        .batch-table input[type="text"], .batch-table input[type="number"] {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font: inherit;
+        }
+        input:focus { border-color: var(--primary) !important; outline: none; box-shadow: var(--focus-ring); background: var(--surface-tint); }
+
+        .btn-remove-row { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: bold; transition: transform 0.15s ease; }
+        .btn-remove-row:hover { transform: scale(1.15); }
+        .btn-remove-row:active { transform: scale(0.9); }
+        .card-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .btn-add-batch { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.78rem; font-weight: 600; transition: background 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease; box-shadow: 0 1px 2px rgba(var(--primary-rgb), 0.25); }
+        .btn-add-batch:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(var(--primary-rgb), 0.35); }
+        .btn-add-batch:active { transform: translateY(0) scale(0.97); box-shadow: none; }
+
+        .card-footer {
+            background: #f8fafc;
+            border-top: 1px solid #eee;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85em;
+        }
+        .card-totals {
+            display: flex;
+            gap: 15px;
+            font-weight: bold;
+        }
+        
+        .card-footer-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .save-status {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+        .btn-delete-card {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid transparent;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .btn-delete-card:hover {
+            background: rgba(var(--danger-rgb), 0.1);
+            border-color: var(--danger);
+            transform: scale(1.05);
+        }
+        .btn-delete-card:active { transform: scale(0.95); }
+
+        .empty-workspace-state { text-align: center; color: var(--muted); margin-top: 80px; }
+        .product-item, .btn-add-batch { transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease; }
+        @media (max-width: 800px) { .top-bar { padding: 10px 16px; flex-wrap: wrap; gap: 10px; } .dashboard-container { height: auto; min-height: calc(100vh - 113px); flex-direction: column; overflow: visible; } .sidebar { width: 100%; max-height: 300px; border-right: 0; border-bottom: 1px solid var(--border); } .workspace { overflow: visible; } .cards-grid { grid-template-columns: 1fr; } }

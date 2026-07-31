@@ -1,0 +1,13 @@
+    .app-toast-stack { position: fixed; top: 18px; right: 18px; z-index: 1100; display: grid; gap: 10px; width: min(380px, calc(100vw - 36px)); }
+    .app-toast { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; background: #fff; border: 1px solid #dee2e6; border-left: 4px solid #17a2b8; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.12); color: #343a40; font: 600 .84rem/1.4 "Helvetica Neue", Helvetica, Arial, sans-serif; animation: app-toast-in .2s ease-out; }
+    .app-toast--success { border-left-color: var(--primary, #449430); } .app-toast--danger { border-left-color: var(--danger, #C64848); } .app-toast--warning { border-left-color: var(--edit, #EEBF49); }
+    .app-toast__close { margin-left: auto; padding: 0; border: 0; background: transparent; color: #6c757d; font-size: 1.1rem; line-height: 1; cursor: pointer; transition: color 0.15s ease, transform 0.15s ease; }
+    .app-toast__close:hover { color: #343a40; transform: scale(1.15); }
+    .app-confirm { display: none; position: fixed; inset: 0; z-index: 1090; align-items: center; justify-content: center; padding: 16px; background: rgba(33,37,41,.45); }
+    .app-confirm.is-open { display: flex; } .app-confirm__dialog { width: min(100%, 390px); overflow: hidden; border: 1px solid #dee2e6; border-radius: 8px; background: #fff; box-shadow: 0 16px 40px rgba(0,0,0,.2); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .app-confirm__body { padding: 18px; } .app-confirm__title { margin: 0 0 7px; color: #212529; font-size: 1rem; font-weight: 700; } .app-confirm__message { margin: 0; color: #6c757d; font-size: .85rem; line-height: 1.45; }
+    .app-confirm__actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid #dee2e6; background: #f8f9fa; } .app-confirm button { padding: 7px 12px; border: 1px solid transparent; border-radius: 6px; font: 600 .82rem inherit; cursor: pointer; transition: background 0.15s ease, filter 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease; }
+    .app-confirm__cancel { background: #fff; border-color: #dee2e6 !important; color: #343a40; } .app-confirm__approve { background: var(--primary, #449430); color: #fff; box-shadow: 0 1px 2px rgba(var(--primary-rgb, 68, 148, 48), 0.3); } .app-confirm__approve--danger { background: var(--danger, #C64848); box-shadow: 0 1px 2px rgba(var(--danger-rgb, 198, 72, 72), 0.3); }
+    .app-confirm__cancel:hover { background: #f1f3f5; } .app-confirm__approve:hover { filter: brightness(0.93); transform: translateY(-1px); }
+    .app-confirm button:active { transform: translateY(0) scale(0.96); }
+    @keyframes app-toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }

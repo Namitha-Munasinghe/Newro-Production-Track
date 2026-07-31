@@ -1,0 +1,38 @@
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; background: var(--page-bg); color: var(--text); font-size: 0.9rem; line-height: 1.5; }
+        .container { max-width: 1240px; margin: 0 auto 32px; background: var(--surface); padding: 28px; border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-sm); }
+        h2 { color: var(--text); margin: 0; font-size: 1.25rem; font-weight: 650; }
+        h3 { margin: 24px 0 12px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+        hr { margin: 16px 0 24px; border: 0; border-top: 1px solid var(--border); }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+        .form-group input { width: 100%; padding: 9px 10px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; font: inherit; }
+        input:focus { outline: none; border-color: var(--primary) !important; box-shadow: var(--focus-ring); }
+        .btn-add { background: var(--primary); color: white; padding: 9px 14px; border: none; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 600; transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease; box-shadow: 0 1px 2px rgba(var(--primary-rgb), 0.25); }
+        .btn-add:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.35); }
+        .btn-add:active { transform: translateY(0) scale(0.97); box-shadow: 0 1px 3px rgba(var(--primary-rgb), 0.3); }
+        
+        /* Search Bar Styles */
+        .search-section { margin: 28px 0 15px; padding-top: 4px; }
+        .search-input { width: 100%; padding: 10px 12px; font: inherit; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; border: 1px solid var(--table-outline); border-radius: 8px; overflow: hidden; }
+        th, td { border-bottom: 1px solid var(--table-outline); padding: 11px 12px; text-align: left; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: 0; }
+        th { background: #f1f5f9; color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+        .product-row { transition: background 0.15s ease; }
+        .product-row:hover { background: var(--surface-tint); }
+        
+        /* Action Buttons */
+        .btn-edit, .btn-delete, .btn-save, .btn-cancel { color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; font: inherit; font-size: 0.78rem; font-weight: 600; transition: filter 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease; }
+        .btn-edit { background: var(--edit); } .btn-delete { background: var(--danger); } .btn-save { background: var(--primary); } .btn-cancel { background: var(--secondary); }
+        .btn-edit:hover, .btn-delete:hover, .btn-save:hover, .btn-cancel:hover { filter: brightness(0.92); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
+        .btn-edit:active, .btn-delete:active, .btn-save:active, .btn-cancel:active { transform: translateY(0) scale(0.96); filter: brightness(0.85); box-shadow: none; }
+        .action-forms { display: inline-block; margin: 0; }
+
+        .alert { padding: 10px 12px; border-radius: 6px; margin-bottom: 15px; font-weight: 600; }
+        .alert-success { background: rgba(var(--primary-rgb), 0.12); color: var(--success-dark); }
+        .alert-danger { background: rgba(var(--danger-rgb), 0.12); color: #8B2F2F; }
+        
+        /* Inline Edit Elements */
+        .edit-input { padding: 7px; width: 90%; box-sizing: border-box; border: 1px solid var(--primary); border-radius: 5px; font: inherit; }
+        @media (max-width: 700px) { .container { margin: 0 12px 24px; padding: 18px; } table { display: block; overflow-x: auto; } }

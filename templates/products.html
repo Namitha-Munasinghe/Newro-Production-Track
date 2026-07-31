@@ -4,44 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Manager</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; margin: 0; background: var(--page-bg); color: var(--text); font-size: 0.9rem; line-height: 1.5; }
-        .container { max-width: 1240px; margin: 0 auto 32px; background: var(--surface); padding: 28px; border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-sm); }
-        h2 { color: var(--text); margin: 0; font-size: 1.25rem; font-weight: 650; }
-        h3 { margin: 24px 0 12px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
-        hr { margin: 16px 0 24px; border: 0; border-top: 1px solid var(--border); }
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-        .form-group input { width: 100%; padding: 9px 10px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; font: inherit; }
-        input:focus { outline: none; border-color: var(--primary) !important; box-shadow: var(--focus-ring); }
-        .btn-add { background: var(--primary); color: white; padding: 9px 14px; border: none; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 600; transition: background 0.2s ease, transform 0.2s ease; }
-        .btn-add:hover { background: var(--primary-dark); transform: translateY(-1px); }
-        
-        /* Search Bar Styles */
-        .search-section { margin: 28px 0 15px; padding-top: 4px; }
-        .search-input { width: 100%; padding: 10px 12px; font: inherit; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
-
-        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-        th, td { border-bottom: 1px solid var(--border); padding: 11px 12px; text-align: left; vertical-align: middle; }
-        tbody tr:last-child td { border-bottom: 0; }
-        th { background: #f1f5f9; color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-        .product-row { transition: background 0.15s ease; }
-        .product-row:hover { background: var(--surface-tint); }
-        
-        /* Action Buttons */
-        .btn-edit, .btn-delete, .btn-save, .btn-cancel { color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; font: inherit; font-size: 0.78rem; font-weight: 600; transition: filter 0.2s ease, transform 0.2s ease; }
-        .btn-edit { background: var(--primary); } .btn-delete { background: var(--danger); } .btn-save { background: var(--success); } .btn-cancel { background: var(--secondary); }
-        .btn-edit:hover, .btn-delete:hover, .btn-save:hover, .btn-cancel:hover { filter: brightness(0.92); transform: translateY(-1px); }
-        .action-forms { display: inline-block; margin: 0; }
-        
-        .alert { padding: 10px 12px; border-radius: 6px; margin-bottom: 15px; font-weight: 600; }
-        .alert-success { background: rgba(40, 167, 69, 0.12); color: #1d6d32; }
-        .alert-danger { background: rgba(220, 53, 69, 0.12); color: #a71d2a; }
-        
-        /* Inline Edit Elements */
-        .edit-input { padding: 7px; width: 90%; box-sizing: border-box; border: 1px solid var(--primary); border-radius: 5px; font: inherit; }
-        @media (max-width: 700px) { .container { margin: 0 12px 24px; padding: 18px; } table { display: block; overflow-x: auto; } }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/products.css') }}">
 </head>
 <body>
 
@@ -55,7 +18,7 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
-          <div class="alert alert-{{ category }}">{{ message }}</div>
+          <div class="alert alert-{{ category }}" data-ui-flash="{{ category }}">{{ message }}</div>
         {% endfor %}
       {% endif %}
     {% endwith %}
@@ -94,14 +57,14 @@
                 <td class="product-name">{{ product.name }}</td>
                 <td style="text-align: center;">
                     <button class="btn-edit" onclick="toggleEdit('{{ product.id }}')">Edit</button>
-                    <form action="/products/delete/{{ product.id }}" method="POST" class="action-forms" onsubmit="return confirm('Are you sure you want to delete product {{ product.code }}? This will clear all historical logs linked to it.');">
+                    <form action="/products/delete/{{ product.id }}" method="POST" class="action-forms" onsubmit="return SupervisorAuthorization.protectForm(this, 'Enter your supervisor PIN to delete {{ product.code }} and its history.')">
                         <button type="submit" class="btn-delete">Delete</button>
                     </form>
                 </td>
             </tr>
 
             <!-- Hidden Inline Dynamic Editing Form Row State -->
-            <tr class="product-row" id="row-edit-{{ product.id }}" style="display: none; background-color: #fef9e7;">
+            <tr class="product-row" id="row-edit-{{ product.id }}" style="display: none; background-color: #FDF3DC;">
                 <form action="/products/edit/{{ product.id }}" method="POST">
                     <td>
                         <input type="text" name="code" value="{{ product.code }}" class="edit-input" required>
@@ -123,6 +86,8 @@
         </tbody>
     </table>
 </main>
+
+{% include 'auth_pin_modal.html' %}
 
 <script>
     // 1. DYNAMIC SEARCH FILTER

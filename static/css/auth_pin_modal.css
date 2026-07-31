@@ -1,0 +1,20 @@
+    /* Bootstrap-compatible modal styling, intentionally scoped to avoid changing page typography. */
+    #authPinModal { display: none; position: fixed; inset: 0; z-index: 1055; overflow-x: hidden; overflow-y: auto; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 0.875rem; }
+    #authPinModal.show { display: block; }
+    #authPinModal .modal-dialog { width: calc(100% - 2rem); max-width: 360px; min-height: calc(100% - 2rem); margin: 1rem auto; display: flex; align-items: center; }
+    #authPinModal .modal-content { width: 100%; background: #fff; border: 1px solid rgba(0,0,0,.12); border-radius: 8px; box-shadow: 0 12px 30px rgba(0,0,0,.18); }
+    #authPinModal .modal-header, #authPinModal .modal-footer { display: flex; align-items: center; padding: 14px 16px; border-color: #dee2e6; }
+    #authPinModal .modal-header { justify-content: space-between; border-bottom: 1px solid #dee2e6; }
+    #authPinModal .modal-title { margin: 0; font-size: 1rem; font-weight: 650; color: #212529; }
+    #authPinModal .modal-body { padding: 16px; } #authPinModal .modal-footer { justify-content: flex-end; gap: 8px; border-top: 1px solid #dee2e6; }
+    #authPinModal .form-label { display: block; margin-bottom: 6px; color: #495057; } #authPinModal .small { font-size: .8rem; } #authPinModal .text-secondary { color: #6c757d; } #authPinModal .mb-3 { margin-bottom: 1rem; } #authPinModal .fw-semibold { font-weight: 600; }
+    #authPinModal .form-control { display: block; width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #ced4da; border-radius: 6px; font: inherit; }
+    #authPinModal .form-control:focus { outline: 0; border-color: var(--primary, #449430); box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 68, 148, 48), .18); }
+    #authPinModal .btn { border: 1px solid transparent; border-radius: 6px; padding: 7px 12px; font: inherit; font-weight: 600; cursor: pointer; transition: background 0.15s ease, filter 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease; }
+    #authPinModal .btn-primary { color: #fff; background: var(--primary, #449430); box-shadow: 0 1px 2px rgba(var(--primary-rgb, 68, 148, 48), .3); }
+    #authPinModal .btn-primary:hover { background: var(--primary-dark, #3A7E29); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(var(--primary-rgb, 68, 148, 48), .35); }
+    #authPinModal .btn-light { color: #343a40; background: #f8f9fa; border-color: #dee2e6; }
+    #authPinModal .btn-light:hover { background: #eef1f4; }
+    #authPinModal .btn:active { transform: translateY(0) scale(0.97); }
+    #authPinModal .btn-close { width: 24px; height: 24px; border: 0; border-radius: 4px; background: transparent; font-size: 1.2rem; cursor: pointer; } #authPinModal .btn-close::before { content: '×'; }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 1050; background: #000; } .modal-backdrop.show { opacity: .45; }

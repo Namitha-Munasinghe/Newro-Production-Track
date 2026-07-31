@@ -4,129 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Final Production Report - {{ selected_date }}</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --container-bg: #ffffff;
-            --text-color: #343a40;
-            --border-color: #dee2e6;
-            --header-bg: #f1f5f9;
-            --alt-row-bg: #f8fbff;
-            --total-row-bg: #e9f3ff;
-            --muted-text: #6c757d;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
-            margin: 0;
-            padding: 20px 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-        }
-
-        .pdf-page-wrapper {
-            max-width: 950px;
-            margin: 0 auto;
-            background: var(--container-bg);
-            padding: 25px 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            border: 1px solid var(--border-color);
-            box-sizing: border-box;
-        }
-
-        .report-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #28a745;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        .report-header h1 {
-            margin: 0;
-            font-size: 1.4rem;
-            color: #1a252f;
-        }
-
-        .report-header .date-badge {
-            font-size: 0.95rem;
-            font-weight: 600;
-            background: #e9f3ff;
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid #bce0fd;
-        }
-
-        .grid-2 { display: flex; gap: 15px; margin-bottom: 12px; }
-        .card {
-            flex: 1;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 12px 15px;
-            background: #ffffff;
-        }
-
-        .card-night { border-top: 3px solid #17a2b8; }
-        .card-day { border-top: 3px solid #ffc107; }
-        .card h3 { margin-top: 0; font-size: 0.88rem; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 8px; }
-
-        .stat-table { width: 100%; border-collapse: collapse; }
-        .stat-table td { padding: 3px 0; border-bottom: 1px solid var(--border-color); font-size: 0.82em; }
-        .stat-table td:last-child { text-align: right; font-weight: bold; }
-
-        .badge { display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
-        .badge-green { background: rgba(40, 167, 69, 0.12); color: #1d6d32; }
-        .badge-red { background: rgba(220, 53, 69, 0.12); color: #a71d2a; }
-
-        table.data-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        table.data-table th, table.data-table td {
-            border: 1px solid var(--border-color);
-            padding: 5px 7px;
-            font-size: 0.82em;
-        }
-        table.data-table th { background-color: var(--header-bg); text-align: left; }
-        table.data-table td.num, table.data-table th.num { text-align: right; }
-        table.data-table tr:nth-child(even) { background-color: var(--alt-row-bg); }
-        .total-row td { background-color: var(--total-row-bg); font-weight: bold; }
-
-        /* Action bar outside the print content */
-        .top-action-bar {
-            max-width: 950px;
-            margin: 0 auto 15px auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .btn-back {
-            background-color: #6c757d;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 0.9em;
-            font-weight: bold;
-        }
-
-        .btn-pdf {
-            background-color: #007bff;
-            color: white;
-            padding: 9px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-pdf:hover, .btn-back:hover { filter: brightness(0.92); }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/final_summary.css') }}">
 </head>
 <body>
 
@@ -179,8 +59,8 @@
             </div>
         </div>
 
-        <div style="background: #e6f4ea; border: 1px solid #a8dab5; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-            <strong style="color: #1d6d32; font-size: 0.9rem;">Grand Overall Yield Recovery:</strong>
+        <div style="background: #F1FBE3; border: 1px solid #DBF5A2; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #29591D; font-size: 0.9rem;">Grand Overall Yield Recovery:</strong>
             <span class="badge badge-green" style="font-size: 0.85rem;">{{ "%.2f"|format(grand_yield_pct) }}%</span>
         </div>
 
@@ -269,35 +149,48 @@
     </main>
 
     <script>
-        // PDF Export - Exactly fits 1 Single A4 page without whitespace
-        function downloadPDF() {
+        // PDF Export — the page is sized to match the rendered content's own height
+        // (instead of a fixed A4 page), so everything always lands on exactly one
+        // page with no forced page-break gaps, no matter how long the product list is.
+        async function downloadPDF() {
             const element = document.getElementById('pdfContent');
             const selectedDate = "{{ selected_date }}";
+            const btn = document.querySelector('.btn-pdf');
+            if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
 
-            const opt = {
-                margin:       [0.2, 0.2, 0.2, 0.2],
-                filename:     `Production_Summary_${selectedDate}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true, 
+            const originalShadow = element.style.boxShadow;
+            element.style.boxShadow = 'none';
+
+            try {
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
                     logging: false,
                     scrollY: 0,
-                    scrollX: 0,
-                    onclone: (clonedDoc) => {
-                        const clonedContent = clonedDoc.getElementById('pdfContent');
-                        if (clonedContent) {
-                            clonedContent.style.marginTop = '0px';
-                            clonedContent.style.paddingTop = '15px';
-                            clonedContent.style.boxShadow = 'none';
-                        }
-                    }
-                },
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
-                pagebreak:    { mode: 'avoid-all' }
-            };
+                    scrollX: 0
+                });
 
-            html2pdf().set(opt).from(element).save();
+                const imgData = canvas.toDataURL('image/jpeg', 0.98);
+
+                const marginMm = 5;
+                const pageWidthMm = 210; // A4 width, kept for a familiar printable size
+                const contentWidthMm = pageWidthMm - marginMm * 2;
+                const contentHeightMm = (canvas.height * contentWidthMm) / canvas.width;
+                const pageHeightMm = contentHeightMm + marginMm * 2;
+
+                const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+                const pdf = new JsPDF({
+                    unit: 'mm',
+                    format: [pageWidthMm, pageHeightMm],
+                    orientation: 'portrait'
+                });
+
+                pdf.addImage(imgData, 'JPEG', marginMm, marginMm, contentWidthMm, contentHeightMm);
+                pdf.save(`Production_Summary_${selectedDate}.pdf`);
+            } finally {
+                element.style.boxShadow = originalShadow;
+                if (btn) { btn.disabled = false; btn.textContent = '📄 Download PDF'; }
+            }
         }
     </script>
 </body>

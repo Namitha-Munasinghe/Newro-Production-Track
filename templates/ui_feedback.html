@@ -1,0 +1,20 @@
+{# Shared application feedback: turns server flashes into toasts and replaces browser dialogs. #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ui_feedback.css') }}">
+<div class="app-toast-stack" id="appToastStack" aria-live="polite"></div>
+<div class="app-confirm" id="appConfirm" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle">
+    <div class="app-confirm__dialog"><div class="app-confirm__body"><h2 class="app-confirm__title" id="appConfirmTitle"></h2><p class="app-confirm__message" id="appConfirmMessage"></p></div><div class="app-confirm__actions"><button type="button" class="app-confirm__cancel" id="appConfirmCancel">Cancel</button><button type="button" class="app-confirm__approve" id="appConfirmApprove">Continue</button></div></div>
+</div>
+<script>
+    window.AppFeedback = (() => {
+        const stack = document.getElementById('appToastStack');
+        const confirmModal = document.getElementById('appConfirm');
+        const confirmTitle = document.getElementById('appConfirmTitle');
+        const confirmMessage = document.getElementById('appConfirmMessage');
+        const approve = document.getElementById('appConfirmApprove');
+        const cancel = document.getElementById('appConfirmCancel');
+        function toast(message, type = 'info') { type = ['success', 'danger', 'warning', 'info'].includes(type) ? type : 'info'; const item = document.createElement('div'); const text = document.createElement('span'); const close = document.createElement('button'); item.className = `app-toast app-toast--${type}`; text.textContent = message; close.className = 'app-toast__close'; close.type = 'button'; close.setAttribute('aria-label', 'Dismiss'); close.textContent = '×'; close.onclick = () => item.remove(); item.append(text, close); stack.appendChild(item); setTimeout(() => item.remove(), 5000); }
+        function confirm({ title = 'Please confirm', message = '', confirmText = 'Continue', variant = 'primary' } = {}) { return new Promise(resolve => { confirmTitle.textContent = title; confirmMessage.textContent = message; approve.textContent = confirmText; approve.className = `app-confirm__approve${variant === 'danger' ? ' app-confirm__approve--danger' : ''}`; confirmModal.classList.add('is-open'); const close = (result) => { confirmModal.classList.remove('is-open'); approve.onclick = null; cancel.onclick = null; resolve(result); }; approve.onclick = () => close(true); cancel.onclick = () => close(false); }); }
+        document.querySelectorAll('[data-ui-flash]').forEach((flash) => { toast(flash.textContent.trim(), flash.dataset.uiFlash || 'info'); flash.remove(); });
+        return { toast, confirm };
+    })();
+</script>

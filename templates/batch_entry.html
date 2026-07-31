@@ -4,292 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Tab Batch Entry System</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; margin: 0; padding: 0; background: var(--page-bg); color: var(--text); font-size: 0.9rem; }
-        
-        /* Top Navigation Bar */
-        .top-bar {
-            background: var(--surface);
-            color: var(--text);
-            padding: 10px 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-        }
-        .top-bar h2 { margin: 0; font-size: 0.9rem; font-weight: 650; }
-        .top-controls { display: flex; gap: 14px; align-items: center; }
-        
-        /* Shift Toggle Control */
-        .shift-toggle-container {
-            display: flex;
-            background: #eef1f4;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 3px;
-        }
-        .shift-btn {
-            background: transparent;
-            border: none;
-            color: var(--muted);
-            padding: 6px 16px;
-            font-weight: 650;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .shift-btn.active-day, .shift-btn.active-night { background: var(--primary); color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
-
-        /* Dynamic Date Picker Highlight Styles */
-        .date-picker-highlight {
-            padding: 6px 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            font-weight: 600;
-            font-size: 0.85rem;
-            outline: none;
-            transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
-        }
-        .date-picker-highlight.is-today {
-            background-color: #e6f4ea !important;
-            border-color: #34a853 !important;
-            color: #137333 !important;
-        }
-        .date-picker-highlight.is-not-today {
-            background-color: #fef7e0 !important;
-            border-color: #f9ab00 !important;
-            color: #b06000 !important;
-        }
-
-        /* Edit Mode Action Buttons (Positioned to Left of Date Picker) */
-        .edit-controls-group {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .btn-edit-mode {
-            background-color: #f39c12;
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-        }
-        .btn-edit-mode:hover { background-color: #d68910; }
-
-        .btn-save-mode {
-            background-color: #27ae60;
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-        }
-        .btn-save-mode:hover { background-color: #219653; }
-
-        .btn-revoke-mode {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-        }
-        .btn-revoke-mode:hover { background-color: #c0392b; }
-
-        /* Read-Only State Enforcement */
-        body.is-readonly input[type="number"],
-        body.is-readonly input[type="text"] {
-            background-color: #f5f7fa !important;
-            cursor: not-allowed !important;
-            border-color: #e2e8f0 !important;
-        }
-        body.is-readonly .btn-remove-row,
-        body.is-readonly .btn-delete-card,
-        body.is-readonly .btn-close-card,
-        body.is-readonly .btn-add-batch {
-            display: none !important;
-        }
-
-        /* Main Workspace Layout */
-        .dashboard-container {
-            display: flex;
-            height: calc(100vh - 113px);
-            overflow: hidden;
-        }
-
-        /* Left Sidebar */
-        .sidebar {
-            width: 320px;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-        }
-        .search-box {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            margin-bottom: 12px;
-            font-size: 0.9em;
-        }
-        .product-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .product-item {
-            padding: 12px;
-            background: #fbfcfd;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s ease;
-        }
-        .product-item:hover { background: var(--surface-tint); border-color: #a9d4ff; transform: translateX(2px); }
-        .product-item.active-open { border-left: 3px solid var(--primary); background: var(--surface-tint); }
-        .product-item .badge { font-size: 0.7rem; background: rgba(40, 167, 69, 0.12); color: #1d6d32; padding: 2px 6px; border-radius: 999px; display: none; }
-
-        /* Workspace */
-        .workspace {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background: var(--page-bg);
-        }
-        .workspace-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-            gap: 20px;
-            align-items: start;
-        }
-
-        /* Product Card */
-        .product-card {
-            background: var(--surface);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        .product-card:focus-within {
-            border-color: var(--primary);
-            box-shadow: var(--focus-ring);
-        }
-        .card-header {
-            background: var(--surface-tint);
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .card-header h3 { margin: 0; font-size: 0.85rem; color: var(--text); font-weight: 650; }
-        .btn-close-card { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #7f8c8d; line-height: 1; padding: 0 4px; }
-        .btn-close-card:hover { color: #e74c3c; }
-
-        .card-body { padding: 15px; }
-        .batch-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        .batch-table th, .batch-table td { padding: 6px; text-align: left; font-size: 0.85em; }
-        .batch-table th { background: #f8fafc; color: var(--muted); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; }
-        
-        .batch-table input[type="text"], .batch-table input[type="number"] {
-            width: 100%;
-            padding: 6px;
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            font: inherit;
-        }
-        input:focus { border-color: var(--primary) !important; outline: none; box-shadow: var(--focus-ring); background: #f8fbff; }
-
-        .btn-remove-row { background: none; border: none; color: #e74c3c; cursor: pointer; font-weight: bold; }
-        .card-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-        .btn-add-batch { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.78rem; font-weight: 600; }
-        .btn-add-batch:hover { background: var(--primary-dark); }
-
-        .card-footer {
-            background: #f8fafc;
-            border-top: 1px solid #eee;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.85em;
-        }
-        .card-totals {
-            display: flex;
-            gap: 15px;
-            font-weight: bold;
-        }
-        
-        .card-footer-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .save-status {
-            font-size: 0.75rem;
-            color: var(--muted);
-            font-style: italic;
-        }
-        .btn-delete-card {
-            background: transparent;
-            color: #e74c3c;
-            border: 1px solid transparent;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-        .btn-delete-card:hover {
-            background: rgba(231, 76, 60, 0.1);
-            border-color: #e74c3c;
-        }
-
-        .empty-workspace-state { text-align: center; color: var(--muted); margin-top: 80px; }
-        .product-item, .btn-add-batch { transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease; }
-        @media (max-width: 800px) { .top-bar { padding: 10px 16px; flex-wrap: wrap; gap: 10px; } .dashboard-container { height: auto; min-height: calc(100vh - 113px); flex-direction: column; overflow: visible; } .sidebar { width: 100%; max-height: 300px; border-right: 0; border-bottom: 1px solid var(--border); } .workspace { overflow: visible; } .cards-grid { grid-template-columns: 1fr; } }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/batch_entry.css') }}">
 </head>
 <body>
 
@@ -311,10 +26,10 @@
             <button id="btn-revoke-toggle" class="btn-revoke-mode" onclick="revokeChanges()">🚫 Discard Changes</button>
         </div>
 
-        <input type="date" 
-               id="entry-date" 
-               class="date-picker-highlight" 
-               value="{{ current_date }}" 
+        <input type="date"
+               id="entry-date"
+               class="date-picker-highlight app-date-input js-flatpickr"
+               value="{{ current_date }}"
                onchange="onDateChange()">
 
         <!-- Swapped order: Night Shift on left, Day Shift on right -->
@@ -360,6 +75,8 @@
     </div>
 </div>
 
+{% include 'auth_pin_modal.html' %}
+
 <script>
     // Set default active shift to night
     let activeShift = 'night';
@@ -367,6 +84,7 @@
     let saveTimeouts = {};
     let isPreviousDate = false;
     let isEditMode = false;
+    let historicalAuthPin = '';
 
     document.addEventListener('DOMContentLoaded', function() {
         const productList = document.getElementById('product-list');
@@ -399,26 +117,29 @@
     function updateDateHighlight() {
         const dateInput = document.getElementById('entry-date');
         if (!dateInput) return;
+        // Flatpickr's altInput is a separate visible field; style whichever is on-screen.
+        const displayEl = dateInput._flatpickr ? dateInput._flatpickr.altInput : dateInput;
 
         const todayStr = getTodayString();
         const selectedDate = dateInput.value;
 
         if (selectedDate === todayStr) {
-            dateInput.classList.add('is-today');
-            dateInput.classList.remove('is-not-today');
-            dateInput.title = "Editing Today's Data";
+            displayEl.classList.add('is-today');
+            displayEl.classList.remove('is-not-today');
+            displayEl.title = "Editing Today's Data";
             isPreviousDate = false;
         } else {
-            dateInput.classList.add('is-not-today');
-            dateInput.classList.remove('is-today');
-            dateInput.title = "⚠️ Caution: Viewing Historical/Future Date";
-            
+            displayEl.classList.add('is-not-today');
+            displayEl.classList.remove('is-today');
+            displayEl.title = "⚠️ Caution: Viewing Historical/Future Date";
+
             // Check if selected date is strictly prior to today
             isPreviousDate = selectedDate < todayStr;
         }
 
         // Reset edit mode state when switching dates
         isEditMode = false;
+        historicalAuthPin = '';
         updateControlsVisibility();
     }
 
@@ -455,15 +176,28 @@
     }
 
     function enableEditMode() {
-        isEditMode = true;
-        updateControlsVisibility();
+        SupervisorAuthorization
+            .requestPin('Enter your supervisor PIN to unlock editing for this historical date.')
+            .then((pin) => fetch('/api/verify-supervisor-pin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ auth_pin: pin })
+            }).then(async (response) => {
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Invalid supervisor PIN.');
+                return pin;
+            }))
+            .then((pin) => {
+                historicalAuthPin = pin;
+                isEditMode = true;
+                updateControlsVisibility();
+            })
+            .catch((error) => {
+                if (error.message !== 'Authorization cancelled') AppFeedback.toast(error.message, 'danger');
+            });
     }
 
     function saveManualChanges() {
-        if (!confirm("Are you sure you want to save these changes?")) {
-            return;
-        }
-
         const date = document.getElementById('entry-date').value;
         const allCards = document.querySelectorAll('.product-card');
         const entries = [];
@@ -477,15 +211,11 @@
         const payload = {
             date: date,
             shift: activeShift,
-            entries: entries
+            entries: entries,
+            auth_pin: historicalAuthPin
         };
 
-        fetch('/api/save-batches', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(response => response.json())
+        postBatchPayload(payload)
         .then(data => {
             if (data.status === 'success') {
                 entries.forEach(e => {
@@ -499,24 +229,31 @@
                 });
 
                 isEditMode = false;
+                historicalAuthPin = '';
                 updateControlsVisibility();
-                alert("Changes saved successfully!");
+                AppFeedback.toast('Changes saved successfully.', 'success');
             } else {
-                alert("Failed to save changes: " + (data.message || "Unknown error"));
+                AppFeedback.toast('Failed to save changes: ' + (data.message || 'Unknown error'), 'danger');
             }
         })
         .catch(err => {
-            alert("Error saving data: " + err);
+            if (err.message === 'Authorization cancelled') return;
+            AppFeedback.toast('Error saving data: ' + err.message, 'danger');
         });
     }
 
-    function revokeChanges() {
-        if (!confirm("Are you sure you want to discard your changes? All unsaved modifications will be lost.")) {
-            return;
-        }
+    function postBatchPayload(payload) {
+        return fetch('/api/save-batches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(response => response.json());
+    }
 
-        // Reload data from backend to discard changes
-        loadSavedEntries();
+    function revokeChanges() {
+        AppFeedback.confirm({ title: 'Discard changes?', message: 'All unsaved modifications will be lost.', confirmText: 'Discard', variant: 'danger' }).then((confirmed) => {
+            if (confirmed) loadSavedEntries();
+        });
     }
 
     function onDateChange() {
@@ -573,7 +310,7 @@
         } else {
             btnNight.className = 'shift-btn';
             btnDay.className = 'shift-btn active-day';
-            shiftTitle.innerHTML = 'Active Mode: <span style="color: #f39c12;">Day Shift</span>';
+            shiftTitle.innerHTML = 'Active Mode: <span style="color: #C69420;">Day Shift</span>';
         }
 
         loadSavedEntries();
@@ -879,12 +616,7 @@
             entries: [{ product_id: productId, batches: batches }]
         };
 
-        fetch('/api/save-batches', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(response => response.json())
+        postBatchPayload(payload)
         .then(data => {
             const statusElem = document.getElementById(`save-status-${productId}`);
             if (data.status === 'success') {
@@ -913,19 +645,17 @@
         const sidebarItem = document.querySelector(`.product-item[data-id="${productId}"]`);
         const pName = sidebarItem ? sidebarItem.dataset.name : 'this product';
 
-        if (confirm(`Are you sure you want to delete all entry data for "${pName}"?`)) {
+        AppFeedback.confirm({ title: 'Delete entry data?', message: `Delete all entry data for "${pName}"?`, confirmText: 'Delete', variant: 'danger' }).then((confirmed) => {
+            if (!confirmed) return;
             const payload = {
                 date: document.getElementById('entry-date').value,
                 shift: activeShift,
                 entries: [{ product_id: productId, batches: [] }]
             };
 
-            fetch('/api/save-batches', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.json())
+            SupervisorAuthorization
+            .requestPin(`Enter your supervisor PIN to delete entry data for "${pName}".`)
+            .then((pin) => postBatchPayload({ ...payload, auth_pin: pin }))
             .then(data => {
                 if (data.status === 'success') {
                     delete savedEntriesMap[productId];
@@ -934,11 +664,13 @@
 
                     closeProductCardUI(productId);
                 } else {
-                    alert("Failed to delete card data: " + data.message);
+                    AppFeedback.toast('Failed to delete card data: ' + data.message, 'danger');
                 }
             })
-            .catch(err => alert("Error deleting card data: " + err));
-        }
+            .catch(err => {
+                if (err.message !== 'Authorization cancelled') AppFeedback.toast('Error deleting card data: ' + err.message, 'danger');
+            });
+        });
     }
 </script>
 

@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
+import hmac
+import os
 
 # 1. Initialize Flask App first so @app decorators work
 app = Flask(__name__)
@@ -37,6 +39,31 @@ class ShiftSummaryInput(db.Model):
     night_before_weight = db.Column(db.Float, default=0.0)
 
     __table_args__ = (db.UniqueConstraint('date', name='_date_summary_uc'),)
+
+class SystemSetting(db.Model):
+    """Small key/value store for application-wide supervisor settings."""
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(100), unique=True, nullable=False)
+    value = db.Column(db.String(255), nullable=False)
+
+def get_system_pin():
+    """Return the configured master PIN, creating the default on first use."""
+    setting = SystemSetting.query.filter_by(key='master_pin').first()
+    if not setting:
+        setting = SystemSetting(key='master_pin', value='1234')
+        db.session.add(setting)
+        db.session.commit()
+    return setting.value
+
+def verify_system_pin(entered_pin):
+    """Accept the stored PIN or the emergency environment override key."""
+    candidate = str(entered_pin or '')
+    stored_pin = get_system_pin()
+    override_key = os.environ.get('MASTER_OVERRIDE_KEY', '')
+    return (
+        hmac.compare_digest(candidate, stored_pin)
+        or (bool(override_key) and hmac.compare_digest(candidate, override_key))
+    )
 
 # --- DATABASE SEEDING ---
 def seed_products():
@@ -99,6 +126,7 @@ def seed_products():
 with app.app_context():
     db.create_all()
     seed_products()
+    get_system_pin()
 
 # --- MAIN ROUTES ---
 
@@ -173,6 +201,11 @@ def save_batches():
 
     try:
         entry_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        if entry_date < datetime.now(timezone.utc).date() and not verify_system_pin(data.get('auth_pin')):
+            return jsonify({
+                'status': 'error',
+                'message': 'Supervisor PIN is required to edit historical entries.'
+            }), 403
 
         for entry in entries:
             product_id = entry.get('product_id')
@@ -202,6 +235,13 @@ def save_batches():
     except Exception as e:
         db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/verify-supervisor-pin', methods=['POST'])
+def verify_supervisor_pin():
+    data = request.get_json(silent=True) or {}
+    if verify_system_pin(data.get('auth_pin')):
+        return jsonify({'status': 'success'})
+    return jsonify({'status': 'error', 'message': 'Invalid supervisor PIN.'}), 403
 
 # --- SUMMARY & PRODUCT MANAGEMENT ROUTES ---
 
@@ -251,6 +291,10 @@ def edit_product(id):
 @app.route('/products/delete/<int:id>', methods=['POST'])
 def delete_product(id):
     selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    if not verify_system_pin(request.form.get('auth_pin')):
+        flash("A valid supervisor PIN is required to delete a product.", "danger")
+        return redirect(url_for('products_manager', date=selected_date_str))
+
     product = Product.query.get(id)
     if product:
         EntryLog.query.filter_by(product_id=id).delete()
@@ -262,12 +306,38 @@ def delete_product(id):
 
     return redirect(url_for('products_manager', date=selected_date_str))
 
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    if request.method == 'POST':
+        current_pin = request.form.get('current_pin')
+        new_pin = request.form.get('new_pin', '').strip()
+        confirm_pin = request.form.get('confirm_pin', '').strip()
+
+        if not verify_system_pin(current_pin):
+            flash("The current supervisor PIN is incorrect.", "danger")
+        elif not new_pin:
+            flash("Enter a new supervisor PIN.", "danger")
+        elif new_pin != confirm_pin:
+            flash("The new PIN and confirmation do not match.", "danger")
+        else:
+            setting = SystemSetting.query.filter_by(key='master_pin').first()
+            setting.value = new_pin
+            db.session.commit()
+            flash("Supervisor PIN updated successfully.", "success")
+        return redirect(url_for('settings'))
+
+    return render_template('settings.html')
+
 @app.route('/summary', methods=['GET', 'POST'])
 def summary():
     selected_date = request.args.get('date') or request.form.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
     query_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
 
     if request.method == 'POST':
+        if query_date < datetime.now(timezone.utc).date() and not verify_system_pin(request.form.get('auth_pin')):
+            flash("A valid supervisor PIN is required to edit historical summary data.", "danger")
+            return redirect(url_for('summary', date=selected_date))
+
         day_b_birds = int(request.form.get('day_before_birds') or 0)
         day_b_weight = float(request.form.get('day_before_weight') or 0.0)
         night_b_birds = int(request.form.get('night_before_birds') or 0)
@@ -462,6 +532,10 @@ def final_summary():
 @app.route('/summary/delete', methods=['POST'])
 def delete_summary():
     selected_date = request.form.get('date')
+    if not verify_system_pin(request.form.get('auth_pin')):
+        flash("A valid supervisor PIN is required to delete summary data.", "danger")
+        return redirect(url_for('summary', date=selected_date))
+
     if selected_date:
         ShiftSummaryInput.query.filter_by(date=selected_date).delete()
         db.session.commit()
@@ -471,6 +545,10 @@ def delete_summary():
 @app.route('/log/delete', methods=['POST'])
 def delete_log_entries():
     selected_date = request.form.get('date')
+    if not verify_system_pin(request.form.get('auth_pin')):
+        flash("A valid supervisor PIN is required to delete production logs.", "danger")
+        return redirect(url_for('home', date=selected_date))
+
     if selected_date:
         target_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
         EntryLog.query.filter_by(date=target_date).delete()
