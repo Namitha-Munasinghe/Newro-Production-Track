@@ -34,8 +34,8 @@
 
         <!-- Swapped order: Night Shift on left, Day Shift on right -->
         <div class="shift-toggle-container">
-            <button class="shift-btn active-night" id="btn-night" onclick="setShift('night')">🌙 Night Shift</button>
-            <button class="shift-btn" id="btn-day" onclick="setShift('day')">☀️ Day Shift</button>
+            <button class="shift-btn{{ ' active-night' if initial_shift == 'night' else '' }}" id="btn-night" onclick="setShift('night')">🌙 Night Shift</button>
+            <button class="shift-btn{{ ' active-day' if initial_shift == 'day' else '' }}" id="btn-day" onclick="setShift('day')">☀️ Day Shift</button>
         </div>
     </div>
 </div>
@@ -62,7 +62,7 @@
     <!-- MAIN WORKSPACE -->
     <div class="workspace">
         <div class="workspace-header">
-            <h3 id="current-shift-title" style="margin:0;">Active Mode: <span style="color: #8e44ad;">Night Shift</span></h3>
+            <h3 id="current-shift-title" style="margin:0;">Active Mode: <span class="{{ 'shift-color-day' if initial_shift == 'day' else 'shift-color-night' }}">{{ 'Day Shift' if initial_shift == 'day' else 'Night Shift' }}</span></h3>
         </div>
 
         <div id="empty-state" class="empty-workspace-state">
@@ -78,8 +78,8 @@
 {% include 'auth_pin_modal.html' %}
 
 <script>
-    // Set default active shift to night
-    let activeShift = 'night';
+    // Initial shift is chosen server-side (?shift=day|night in the URL, defaults to night)
+    let activeShift = '{{ initial_shift }}';
     let savedEntriesMap = {};
     let saveTimeouts = {};
     let isPreviousDate = false;
@@ -306,11 +306,11 @@
         if (shift === 'night') {
             btnNight.className = 'shift-btn active-night';
             btnDay.className = 'shift-btn';
-            shiftTitle.innerHTML = 'Active Mode: <span style="color: #8e44ad;">Night Shift</span>';
+            shiftTitle.innerHTML = 'Active Mode: <span class="shift-color-night">Night Shift</span>';
         } else {
             btnNight.className = 'shift-btn';
             btnDay.className = 'shift-btn active-day';
-            shiftTitle.innerHTML = 'Active Mode: <span style="color: #C69420;">Day Shift</span>';
+            shiftTitle.innerHTML = 'Active Mode: <span class="shift-color-day">Day Shift</span>';
         }
 
         loadSavedEntries();

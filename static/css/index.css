@@ -61,6 +61,34 @@
 
         .date-section label { font-size: 0.75rem; color: var(--muted, #6c757d); letter-spacing: 0.06em; }
         .date-section input { padding: 8px 10px; font: inherit; border: 1px solid var(--border, #dee2e6); border-radius: 6px; background: var(--surface, #ffffff); }
+        #date-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .btn-today {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            border: 1.5px solid var(--primary, #449430);
+            border-radius: 7px;
+            background: var(--surface, #ffffff);
+            color: var(--primary, #449430);
+            font: inherit;
+            font-size: 0.8rem;
+            font-weight: 650;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+        }
+        .btn-today:hover:not(:disabled) { background: var(--primary, #449430); color: #fff; transform: translateY(-1px); box-shadow: 0 3px 8px rgba(var(--primary-rgb, 68, 148, 48), 0.3); }
+        .btn-today:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+        .btn-today:disabled,
+        .btn-today.is-current {
+            border-color: var(--border, #dee2e6);
+            color: var(--muted, #6c757d);
+            background: var(--page-bg, #f7faf3);
+            cursor: default;
+            opacity: 0.85;
+        }
         .search-section { flex-grow: 1; max-width: 400px; }
         .search-input { width: 100%; padding: 9px 12px; font: inherit; border: 1px solid var(--border, #dee2e6); border-radius: 6px; box-sizing: border-box; background: var(--surface, #ffffff); }
         input:focus { outline: none; border-color: var(--primary, #449430) !important; box-shadow: var(--focus-ring, 0 0 0 3px rgba(68,148,48,0.18)); }
@@ -131,18 +159,29 @@
             background-color: var(--edit-dark, #CAA23E) !important;
         }
 
-        /* BOTTOM ACTION BAR - CENTERING LAYOUT */
+        /* BOTTOM ACTION BAR */
         .button-group {
             display: flex;
             align-items: center;
-            justify-content: center;
             position: relative;
             margin-top: 24px;
         }
 
+        /* Mirrors the table's column widths (Product 40% / Night 30% / Day 30%)
+           so each button lines up directly under its matching column. */
+        .button-group__shift-actions {
+            display: grid;
+            grid-template-columns: 40% 30% 30%;
+            align-items: center;
+            width: 100%;
+        }
+        .shift-action-cell { display: flex; justify-content: center; padding: 0 6px; box-sizing: border-box; }
+        .shift-action-cell--spacer { visibility: hidden; }
+
         .btn-summary {
-            width: 220px;
-            padding: 12px;
+            width: auto;
+            min-width: 210px;
+            padding: 12px 18px;
             background-color: var(--primary, #449430);
             color: white;
             border: none;
@@ -159,6 +198,24 @@
         }
         .btn-summary:hover { background-color: var(--primary-dark, #3A7E29); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(var(--primary-rgb, 68, 148, 48), 0.35); }
         .btn-summary:active { transform: translateY(0) scale(0.98); box-shadow: 0 1px 3px rgba(var(--primary-rgb, 68, 148, 48), 0.3); }
+
+        /* Shift-specific colors, echoing the night/day identity used elsewhere in the app */
+        .btn-add-night { background-color: #17a2b8; box-shadow: 0 1px 2px rgba(23, 162, 184, 0.3); }
+        .btn-add-night:hover { background-color: #128194; box-shadow: 0 4px 10px rgba(23, 162, 184, 0.35); }
+        .btn-add-day { background-color: var(--edit, #EEBF49); box-shadow: 0 1px 2px rgba(var(--edit-rgb, 238, 191, 73), 0.3); }
+        .btn-add-day:hover { background-color: var(--edit-dark, #CAA23E); box-shadow: 0 4px 10px rgba(var(--edit-rgb, 238, 191, 73), 0.35); }
+
+        /* Previous Date Warning Amber Style - matches .btn-add-data-nav.is-previous-date */
+        .btn-add-night.is-previous-date,
+        .btn-add-day.is-previous-date {
+            background-color: var(--edit, #EEBF49) !important;
+            color: #ffffff !important;
+            box-shadow: 0 1px 2px rgba(var(--edit-rgb, 238, 191, 73), 0.3) !important;
+        }
+        .btn-add-night.is-previous-date:hover,
+        .btn-add-day.is-previous-date:hover {
+            background-color: var(--edit-dark, #CAA23E) !important;
+        }
 
         /* CIRCULAR DELETE BUTTON AT FAR RIGHT */
         .button-group form,
@@ -201,4 +258,13 @@
         }
 
         .alert { padding: 10px 12px; border-radius: 6px; margin-bottom: 15px; background: rgba(var(--primary-rgb, 68, 148, 48), 0.12); color: var(--success-dark, #29591D); font-weight: 600; }
-        @media (max-width: 700px) { .container { margin: 0 12px 24px; padding: 18px; } .controls-section { align-items: stretch; flex-direction: column; } .search-section { max-width: none; } table { display: block; overflow-x: auto; } }
+        @media (max-width: 700px) {
+            .container { margin: 0 12px 24px; padding: 18px; }
+            .controls-section { align-items: stretch; flex-direction: column; }
+            .search-section { max-width: none; }
+            table { display: block; overflow-x: auto; }
+            .button-group { flex-direction: column; align-items: stretch; gap: 14px; }
+            .button-group__shift-actions { grid-template-columns: 1fr; gap: 10px; }
+            .shift-action-cell--spacer { display: none; }
+            .button-group form, .button-group > .btn-delete-icon { position: static; align-self: center; }
+        }

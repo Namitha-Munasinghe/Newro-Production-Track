@@ -16,7 +16,7 @@
     <!-- TOP HEADER -->
     <div class="header-top">
         <h2>Poultry Shift Production Sheet</h2>
-        <a href="{{ url_for('batch_entry', date=current_date) }}" class="btn-add-data-nav js-btn-add-data"> Enter Batch Data</a>
+        <a href="/summary?date={{ current_date }}" class="btn-add-data-nav">📊 View Summary</a>
     </div>
     <hr>
 
@@ -33,6 +33,7 @@
             <form id="date-form" method="GET" action="/">
                 <label for="date"><strong>DATE:</strong></label>
                 <input type="date" id="date" name="date" class="app-date-input js-flatpickr" value="{{ current_date }}" onchange="this.form.submit()" required>
+                <button type="button" id="btn-today" class="btn-today" onclick="goToToday()" title="Jump to today's date">📍 Today</button>
             </form>
         </div>
         <div class="search-section">
@@ -91,8 +92,8 @@
                     <td colspan="5">
                         <div class="empty-state-content">
                             <h3>No Batch Entries Logged for {{ current_date }}</h3>
-                            <p>Select "Enter Batch Data" to start recording production.</p>
-                            <a href="{{ url_for('batch_entry', date=current_date) }}" class="btn-add-large js-btn-add-data"> Enter Batch Data</a>
+                            <p>Select "Add Batch" to start recording production.</p>
+                            <a href="{{ url_for('batch_entry', date=current_date) }}" class="btn-add-large js-btn-add-data"> + Add Batch</a>
                         </div>
                     </td>
                 </tr>
@@ -110,8 +111,16 @@
 
     <!-- BOTTOM ACTION AREA -->
     <div class="button-group">
-        <!-- SUMMARY BUTTON CENTERED -->
-        <a href="/summary?date={{ current_date }}" class="btn-summary">📊 View Summary</a>
+        <!-- SHIFT-SPECIFIC ADD BATCH BUTTONS, ALIGNED UNDER THEIR TABLE COLUMNS -->
+        <div class="button-group__shift-actions">
+            <div class="shift-action-cell shift-action-cell--spacer"></div>
+            <div class="shift-action-cell">
+                <a href="{{ url_for('batch_entry', date=current_date, shift='night') }}" class="btn-summary btn-add-night js-btn-add-data">🌙 Add Night Shift Batch</a>
+            </div>
+            <div class="shift-action-cell">
+                <a href="{{ url_for('batch_entry', date=current_date, shift='day') }}" class="btn-summary btn-add-day js-btn-add-data">☀️ Add Day Shift Batch</a>
+            </div>
+        </div>
 
         <!-- CIRCULAR DELETE BUTTON POSITIONED ON THE RIGHT CORNER -->
         {% if logged_items|length > 0 %}
@@ -180,26 +189,46 @@
         if (elNightWeight) elNightWeight.innerText = nightWeight.toFixed(2);
     }
 
+    function getTodayString() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // Jump the date picker straight to today and reload the log sheet for it.
+    function goToToday() {
+        const dateInput = document.getElementById('date');
+        if (!dateInput) return;
+        const todayStr = getTodayString();
+        if (dateInput.value === todayStr) return; // already viewing today
+
+        if (dateInput._flatpickr) {
+            dateInput._flatpickr.setDate(todayStr, true); // true = fires onChange -> form submit
+        } else {
+            dateInput.value = todayStr;
+            document.getElementById('date-form').submit();
+        }
+    }
+
     // Check date and update container & button styling for previous dates
     function updateDateContainerColor() {
         const dateInput = document.getElementById('date');
         const controlsSection = document.querySelector('.controls-section');
         const addDataBtns = document.querySelectorAll('.js-btn-add-data');
+        const btnToday = document.getElementById('btn-today');
         if (!dateInput || !controlsSection) return;
 
         const selectedDateStr = dateInput.value;
-
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const todayStr = `${year}-${month}-${day}`;
+        const todayStr = getTodayString();
 
         if (selectedDateStr === todayStr) {
             controlsSection.classList.add('is-today');
             controlsSection.classList.remove('is-past-future');
-            
+
             addDataBtns.forEach(btn => btn.classList.remove('is-previous-date'));
+            if (btnToday) { btnToday.disabled = true; btnToday.classList.add('is-current'); btnToday.textContent = '📍 Viewing Today'; }
         } else {
             controlsSection.classList.add('is-past-future');
             controlsSection.classList.remove('is-today');
@@ -210,6 +239,7 @@
             } else {
                 addDataBtns.forEach(btn => btn.classList.remove('is-previous-date'));
             }
+            if (btnToday) { btnToday.disabled = false; btnToday.classList.remove('is-current'); btnToday.textContent = '📍 Today'; }
         }
     }
 

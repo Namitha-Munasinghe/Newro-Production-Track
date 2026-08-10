@@ -204,8 +204,11 @@ def home():
 @app.route('/entry')
 def batch_entry():
     selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    initial_shift = request.args.get('shift', 'night')
+    if initial_shift not in ('day', 'night'):
+        initial_shift = 'night'
     products = Product.query.order_by(Product.code).all()
-    return render_template('batch_entry.html', products=products, current_date=selected_date_str)
+    return render_template('batch_entry.html', products=products, current_date=selected_date_str, initial_shift=initial_shift)
 
 # --- BATCH ENTRY API ENDPOINTS ---
 

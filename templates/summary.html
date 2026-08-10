@@ -192,7 +192,7 @@
         <!-- UPDATED ACTION ROW: SEE FINAL SUMMARY BUTTON -->
         <div class="action-row">
             <div class="action-row__left">
-                <a href="#" id="seeFinalSummaryBtn" class="btn-summary-view" onclick="redirectToFinalSummary(event)">👁️ See Final Summary</a>
+                <a href="#" id="seeFinalSummaryBtn" class="btn-summary-view" onclick="redirectToFinalSummary(event)">📋 Summary Report</a>
                 <a href="#" id="viewBreakdownBtn" class="btn-breakdown-view" onclick="redirectToBreakdown(event)">📦 Product Breakdown</a>
             </div>
             <button type="submit" class="btn-delete" formaction="/summary/delete" onclick="this.form.action = this.formAction; return SupervisorAuthorization.protectForm(this.form, 'Enter your supervisor PIN to delete summary data for {{ selected_date }}.')">🗑️ Delete Summary</button>
@@ -213,10 +213,29 @@
     let isHistoricalDate = false;
     let summaryAuthPin = '';
 
+    function hasBeforeProcessingValues() {
+        const ids = ['night_b_weight', 'night_b_birds', 'day_b_weight', 'day_b_birds'];
+        return ids.some(id => (parseFloat(document.getElementById(id).value) || 0) > 0);
+    }
+
     function redirectToFinalSummary(e) {
         e.preventDefault();
         const selectedDate = document.getElementById('date').value || '{{ selected_date }}';
-        window.location.href = `/final-summary?date=${selectedDate}`;
+        const goToSummary = () => { window.location.href = `/final-summary?date=${selectedDate}`; };
+
+        if (hasBeforeProcessingValues()) {
+            goToSummary();
+            return;
+        }
+
+        AppFeedback.confirm({
+            title: '⚠️ Before-processing values are 0',
+            message: 'No before-processing birds or weight have been entered for either shift yet, so yield recovery and shrink figures in the summary will show as 0%. Enter and save those values first for an accurate report, or continue anyway.',
+            confirmText: 'Continue Anyway',
+            variant: 'danger'
+        }).then((confirmed) => {
+            if (confirmed) goToSummary();
+        });
     }
 
     function redirectToBreakdown(e) {
