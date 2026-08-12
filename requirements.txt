@@ -1,0 +1,6 @@
+Flask==3.1.3
+Flask-SQLAlchemy==3.1.1
+
+# Desktop app packaging (Windows build) — not needed to run the web app
+pywebview==6.2.1
+pyinstaller==6.22.0

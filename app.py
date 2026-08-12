@@ -3,12 +3,39 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone, timedelta
 import hmac
 import os
+import sys
+
+# Running as a PyInstaller-frozen desktop build vs. the normal `python app.py` web app.
+# Frozen builds extract templates/static into a temp dir (sys._MEIPASS) and must store
+# the database somewhere durable outside that temp dir instead.
+FROZEN = getattr(sys, 'frozen', False)
+BASE_DIR = sys._MEIPASS if FROZEN else os.path.dirname(os.path.abspath(__file__))
+
+def get_app_data_dir():
+    """Writable, persistent per-user folder for the SQLite database (desktop build only)."""
+    if sys.platform == 'win32':
+        base = os.environ.get('APPDATA') or os.path.expanduser('~')
+    elif sys.platform == 'darwin':
+        base = os.path.expanduser('~/Library/Application Support')
+    else:
+        base = os.environ.get('XDG_DATA_HOME') or os.path.expanduser('~/.local/share')
+    path = os.path.join(base, 'NewroOperations')
+    os.makedirs(path, exist_ok=True)
+    return path
 
 # 1. Initialize Flask App first so @app decorators work
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, 'templates'),
+    static_folder=os.path.join(BASE_DIR, 'static')
+)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'poultry_secret_key')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///newro_poultry.db'
+if FROZEN:
+    db_path = os.path.join(get_app_data_dir(), 'newro_poultry.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + db_path
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///newro_poultry.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
