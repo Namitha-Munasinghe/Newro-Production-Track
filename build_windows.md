@@ -9,6 +9,17 @@ working locally; this is just the packaging step.
 
 - Python 3.11+ installed (check "Add python.exe to PATH" during install)
 - A copy of this whole project folder
+- **Microsoft Edge WebView2 Runtime.** This is the actual rendering engine
+  the app runs in — without it, the app still opens but silently falls back
+  to the ancient Internet Explorer engine, which can't run this app's JS/CSS
+  at all (looks like faded/broken styling, dead buttons, a calendar that
+  won't open). Most Windows 10/11 PCs already have it (it ships with
+  Windows 11 and is pushed via Windows Update on most Windows 10 machines),
+  but **don't assume the client's PC has it** — some locked-down or older
+  machines don't. Install it from
+  https://developer.microsoft.com/microsoft-edge/webview2/ (small download,
+  no restart needed) on **every** machine this app will run on, including
+  the client's — this needs doing once per PC, not just once per build.
 
 ## 2. Set up and smoke-test first
 
@@ -60,3 +71,19 @@ machine and run it — no Python install needed on their end.
   warning the first time the client runs it. That's expected for an unsigned
   binary, not a bug. Proper distribution would need a code-signing
   certificate.
+
+## Troubleshooting
+
+**App opens but looks faded, calendar doesn't open, buttons seem missing or
+dead, clicking into a product does nothing.** This is the WebView2 Runtime
+issue described above — that PC is missing it, so the app fell back to a
+rendering engine that can't run modern JS/CSS. Install the runtime from the
+link above and relaunch the app; no rebuild needed. `desktop_app.py` now
+forces the modern engine explicitly, so on any build made after this note
+was added, this failure instead shows a clear popup telling you exactly
+this, rather than silently rendering broken.
+
+**Antivirus/Defender flags or deletes the `.exe`, or it won't launch at
+all.** Common false-positive with PyInstaller `--onefile` builds — the
+self-extracting technique looks similar to real malware droppers. Check
+Windows Defender's "Protection history" and restore/allow it from there.

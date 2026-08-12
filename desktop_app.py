@@ -6,6 +6,7 @@ Run directly for local testing:  python desktop_app.py
 Build into a Windows .exe with:  see build_windows.md
 """
 import socket
+import sys
 import threading
 import time
 import urllib.request
@@ -13,6 +14,8 @@ import urllib.request
 import webview
 
 from app import app as flask_app
+
+WEBVIEW2_DOWNLOAD_URL = 'https://developer.microsoft.com/microsoft-edge/webview2/'
 
 
 def find_free_port():
@@ -55,7 +58,28 @@ def main():
         height=900,
         min_size=(1024, 700)
     )
-    webview.start()
+
+    try:
+        # Force the modern Chromium-based Edge engine. Left to auto-detect,
+        # pywebview silently falls back to the ancient IE/Trident engine on
+        # any Windows PC without the WebView2 Runtime installed — which can't
+        # run this app's JS/CSS at all, but LOOKS like a half-working app
+        # (faded styling, dead buttons) rather than an obvious failure.
+        webview.start(gui='edgechromium' if sys.platform == 'win32' else None)
+    except Exception as exc:
+        if sys.platform == 'win32':
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(
+                0,
+                'Newro Operations needs the Microsoft Edge WebView2 Runtime, which '
+                "isn't installed on this PC.\n\n"
+                f'Install it from:\n{WEBVIEW2_DOWNLOAD_URL}\n\n'
+                'Then reopen this app.\n\n'
+                f'(Technical detail: {exc})',
+                'Newro Operations - Missing Component',
+                0x10  # MB_ICONERROR
+            )
+        raise
 
 
 if __name__ == '__main__':
