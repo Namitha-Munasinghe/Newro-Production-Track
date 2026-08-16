@@ -87,3 +87,12 @@ this, rather than silently rendering broken.
 all.** Common false-positive with PyInstaller `--onefile` builds — the
 self-extracting technique looks similar to real malware droppers. Check
 Windows Defender's "Protection history" and restore/allow it from there.
+
+**"Download PDF" says "Generating…" and never produces a file.** Browser-style
+downloads (`pdf.save()`) work by clicking a hidden link to a `blob:` URL —
+that mechanism isn't reliably supported inside an embedded WebView2 control,
+so it can complete successfully with no error and no file. Fixed by routing
+PDF saves through a native Save dialog (`Api.save_pdf_file` in
+`desktop_app.py`) instead, on any build made after this note was added. If
+you still see this on a current build, check whether the Save dialog opened
+*behind* the app window rather than not opening at all.
