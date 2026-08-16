@@ -5,6 +5,7 @@ window via pywebview, instead of requiring a browser + localhost URL.
 Run directly for local testing:  python desktop_app.py
 Build into a Windows .exe with:  see build_windows.md
 """
+import base64
 import socket
 import sys
 import threading
@@ -16,6 +17,39 @@ import webview
 from app import app as flask_app
 
 WEBVIEW2_DOWNLOAD_URL = 'https://developer.microsoft.com/microsoft-edge/webview2/'
+
+
+class Api:
+    """
+    JS-callable bridge (window.pywebview.api.*) for things a browser tab can
+    do natively but an embedded webview can't be relied on for — PDF
+    downloads via a synthetic <a download> click on a blob: URL routinely do
+    nothing in an embedded WebView2 control, with no error and no dialog.
+    Routing the save through a real native "Save As" dialog here sidesteps
+    that entirely, since it's Python doing the file write, not the webview.
+    """
+
+    def save_pdf_file(self, data_uri, suggested_name):
+        try:
+            # jsPDF's output('datauristring') looks like:
+            # "data:application/pdf;filename=generated.pdf;base64,JVBERi0x..."
+            b64_data = data_uri.split(',', 1)[1] if ',' in data_uri else data_uri
+            pdf_bytes = base64.b64decode(b64_data)
+
+            result = webview.windows[0].create_file_dialog(
+                webview.FileDialog.SAVE,
+                save_filename=suggested_name,
+                file_types=('PDF Files (*.pdf)', 'All files (*.*)')
+            )
+            if not result:
+                return {'status': 'cancelled'}
+
+            path = result[0] if isinstance(result, (list, tuple)) else result
+            with open(path, 'wb') as f:
+                f.write(pdf_bytes)
+            return {'status': 'success', 'path': path}
+        except Exception as exc:
+            return {'status': 'error', 'message': str(exc)}
 
 
 def find_free_port():
@@ -56,7 +90,8 @@ def main():
         f'http://127.0.0.1:{port}/',
         width=1440,
         height=900,
-        min_size=(1024, 700)
+        min_size=(1024, 700),
+        js_api=Api()
     )
 
     try:

@@ -122,6 +122,23 @@
     </main>
 
     <script>
+        // In the desktop app, a normal browser-style download (pdf.save())
+        // routinely does nothing in the embedded webview — no error, no file.
+        // window.pywebview.api is only present there, so route through a real
+        // native Save dialog in that case; a plain browser tab falls through
+        // to the regular download unchanged.
+        async function savePdf(pdf, filename) {
+            if (window.pywebview && window.pywebview.api && window.pywebview.api.save_pdf_file) {
+                const dataUri = pdf.output('datauristring');
+                const result = await window.pywebview.api.save_pdf_file(dataUri, filename);
+                if (result && result.status === 'error' && window.AppFeedback) {
+                    AppFeedback.toast('Could not save PDF: ' + result.message, 'danger');
+                }
+                return;
+            }
+            pdf.save(filename);
+        }
+
         async function downloadPDF() {
             const element = document.getElementById('pdfContent');
             const selectedDate = "{{ selected_date }}";
@@ -169,7 +186,7 @@
                 });
 
                 pdf.addImage(imgData, 'JPEG', marginMm, marginMm, contentWidthMm, contentHeightMm);
-                pdf.save(`Production_Summary_${selectedDate}.pdf`);
+                await savePdf(pdf, `Summary_${selectedDate}.pdf`);
             } finally {
                 element.style.boxShadow = originalShadow;
                 if (btn) { btn.disabled = false; btn.textContent = '📄 Download PDF'; }

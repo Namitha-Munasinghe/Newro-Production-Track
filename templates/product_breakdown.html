@@ -90,6 +90,23 @@
     </main>
 
     <script>
+        // In the desktop app, a normal browser-style download (pdf.save())
+        // routinely does nothing in the embedded webview — no error, no file.
+        // window.pywebview.api is only present there, so route through a real
+        // native Save dialog in that case; a plain browser tab falls through
+        // to the regular download unchanged.
+        async function savePdf(pdf, filename) {
+            if (window.pywebview && window.pywebview.api && window.pywebview.api.save_pdf_file) {
+                const dataUri = pdf.output('datauristring');
+                const result = await window.pywebview.api.save_pdf_file(dataUri, filename);
+                if (result && result.status === 'error' && window.AppFeedback) {
+                    AppFeedback.toast('Could not save PDF: ' + result.message, 'danger');
+                }
+                return;
+            }
+            pdf.save(filename);
+        }
+
         // PDF Export — page sized to match the rendered content's own height,
         // so the breakdown always lands on exactly one page.
         async function downloadPDF() {
@@ -135,7 +152,7 @@
                 });
 
                 pdf.addImage(imgData, 'JPEG', marginMm, marginMm, contentWidthMm, contentHeightMm);
-                pdf.save(`Finished_Products_Breakdown_${selectedDate}.pdf`);
+                await savePdf(pdf, `Product_Breakdown_${selectedDate}.pdf`);
             } finally {
                 element.style.boxShadow = originalShadow;
                 if (btn) { btn.disabled = false; btn.textContent = '📄 Download PDF'; }
