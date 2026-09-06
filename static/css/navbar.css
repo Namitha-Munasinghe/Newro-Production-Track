@@ -25,6 +25,34 @@
         --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
         --focus-ring: 0 0 0 3px rgba(68, 148, 48, 0.18);
     }
+    body.dark-mode {
+        --primary: #4f9e42;
+        --primary-dark: #3f7f35;
+        --primary-rgb: 79, 158, 66;
+        --edit: #c99a49;
+        --edit-dark: #ad8340;
+        --edit-rgb: 201, 154, 73;
+        --table-outline: #33402c;
+        --accent-tint: #1b2a18;
+        --secondary: #9aa4ad;
+        --header-dark: #182016;
+        --page-bg: #12161a;
+        --surface: #1b2027;
+        --surface-tint: #202b1c;
+        --border: #2b3138;
+        --text: #e8eaed;
+        --muted: #9aa4ad;
+        --success: #4f9e42;
+        --success-dark: #7cbf6b;
+        --warning: #c99a49;
+        --danger: #b85c5c;
+        --danger-dark: #9c4c4c;
+        --danger-rgb: 184, 92, 92;
+        --info: #2e9db3;
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
+        --focus-ring: 0 0 0 3px rgba(79, 158, 66, 0.35);
+    }
+    body.dark-mode { background: var(--page-bg); }
     .app-navbar {
         display: flex;
         justify-content: space-between;
@@ -63,6 +91,25 @@
     .app-navbar__link--entry:hover { background: var(--primary-dark); border-color: var(--primary-dark); box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.35); }
     .app-navbar__link--entry:active { box-shadow: 0 1px 3px rgba(var(--primary-rgb), 0.3); }
     .app-navbar__link--logout:hover { background: rgba(var(--danger-rgb), 0.6); border-color: rgba(var(--danger-rgb), 0.7); }
+    .app-navbar__theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.16);
+        background: rgba(255,255,255,0.12);
+        color: #fff;
+        font-size: 1rem;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    }
+    .app-navbar__theme-toggle:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.32); transform: translateY(-1px); }
+    .app-navbar__theme-toggle:active { transform: translateY(0); }
+    .app-navbar__theme-toggle:focus-visible { outline: none; box-shadow: var(--focus-ring); }
     input[type="date"], .app-date-input {
         min-height: 40px;
         padding: 8px 10px 8px 14px;
@@ -100,6 +147,17 @@
     /* Flatpickr's altInput clones the original element's classes onto the visible text field */
     .app-date-input.flatpickr-input { cursor: pointer; }
     .app-date-input::placeholder { color: var(--muted); font-weight: 500; }
+    body.dark-mode input[type="date"],
+    body.dark-mode .app-date-input { background: var(--surface); color: var(--text); }
+    body.dark-mode input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.85); }
+    body.dark-mode input:not([type="checkbox"]):not([type="radio"]),
+    body.dark-mode select,
+    body.dark-mode textarea {
+        background: var(--surface);
+        color: var(--text);
+        border-color: var(--border);
+    }
+    body.dark-mode ::placeholder { color: var(--muted); opacity: 1; }
     .app-navbar--compact { margin: 0; padding: 0; min-height: 0; background: transparent; box-shadow: none; }
     .app-navbar--compact .app-navbar__brand { display: none; }
     .app-navbar--flush { margin-bottom: 0; }

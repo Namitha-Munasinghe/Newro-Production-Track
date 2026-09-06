@@ -1,4 +1,9 @@
-        :root {
+        /* Declared on `body` (not `:root`) so that these aliases' var() references
+           resolve using body's own cascade -- letting `body.dark-mode` below override
+           them. Custom properties substitute using the value cascaded at the element
+           where they're declared, and :root can never see an override placed on its
+           own descendant. */
+        body {
             --bg-color: var(--page-bg, #f8f9fa);
             --container-bg: var(--surface, #ffffff);
             --text-color: var(--text, #343a40);
@@ -14,18 +19,13 @@
         }
 
         body.dark-mode {
-            --bg-color: #1a1a2e;
-            --container-bg: #16213e;
-            --text-color: #e0e0e0;
-            --card-bg: #0f3460;
-            --border-color: #2a3b5c;
-            --header-bg: #1f4068;
-            --alt-row-bg: #132743;
-            --total-row-bg: #1f4068;
-            --picker-bg: #102a43;
-            --input-bg: #1f4068;
-            --input-text: #ffffff;
-            --muted-text: #a0aec0;
+            --card-bg: var(--surface, #1b2027);
+            --header-bg: var(--surface-tint, #202b1c);
+            --alt-row-bg: var(--surface-tint, #202b1c);
+            --total-row-bg: var(--accent-tint, #1b2a18);
+            --picker-bg: var(--surface-tint, #202b1c);
+            --input-bg: var(--surface, #1b2027);
+            --input-text: var(--text, #e8eaed);
         }
 
         body {
@@ -143,8 +143,11 @@
         .badge-green { background: rgba(var(--primary-rgb, 68, 148, 48), 0.14); color: var(--success-dark, #29591D); }
         .badge-red { background: rgba(var(--danger-rgb, 198, 72, 72), 0.12); color: #8B2F2F; }
 
-        body.dark-mode .badge-green { background-color: #1e4620; color: #a3e635; }
-        body.dark-mode .badge-red { background-color: #4a151b; color: #f87171; }
+        body.dark-mode .badge-green { background-color: rgba(95, 191, 70, 0.18); color: var(--success-dark); }
+        body.dark-mode .badge-red { background-color: rgba(184, 92, 92, 0.18); color: #d98a8a; }
+        body.dark-mode .date-picker-bar { border-color: var(--table-outline); }
+        body.dark-mode .date-picker-bar.is-not-today { background-color: rgba(201, 154, 73, 0.14) !important; border-color: rgba(201, 154, 73, 0.4) !important; }
+        body.dark-mode .form-group input:disabled { background-color: rgba(255, 255, 255, 0.06); }
 
         table.data-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
         table.data-table th, table.data-table td {

@@ -11,3 +11,14 @@
     .app-confirm__cancel:hover { background: #f1f3f5; } .app-confirm__approve:hover { filter: brightness(0.93); transform: translateY(-1px); }
     .app-confirm button:active { transform: translateY(0) scale(0.96); }
     @keyframes app-toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+    body.dark-mode .app-toast { background: var(--surface, #1b2027); border-color: var(--border, #2b3138); color: var(--text, #e8eaed); box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+    body.dark-mode .app-toast__close { color: var(--muted, #9aa4ad); }
+    body.dark-mode .app-toast__close:hover { color: var(--text, #e8eaed); }
+    body.dark-mode .app-confirm { background: rgba(0,0,0,.65); }
+    body.dark-mode .app-confirm__dialog { background: var(--surface, #1b2027); border-color: var(--border, #2b3138); box-shadow: 0 16px 40px rgba(0,0,0,.55); }
+    body.dark-mode .app-confirm__title { color: var(--text, #e8eaed); }
+    body.dark-mode .app-confirm__message { color: var(--muted, #9aa4ad); }
+    body.dark-mode .app-confirm__actions { border-top-color: var(--border, #2b3138); background: var(--surface-tint, #202b1c); }
+    body.dark-mode .app-confirm__cancel { background: var(--surface, #1b2027); border-color: var(--border, #2b3138) !important; color: var(--text, #e8eaed); }
+    body.dark-mode .app-confirm__cancel:hover { background: var(--border, #2b3138); }

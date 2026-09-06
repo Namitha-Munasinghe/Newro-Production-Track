@@ -5,6 +5,17 @@
 {% set nav_date = current_date if current_date is defined else (selected_date if selected_date is defined else none) %}
 {% set log_sheet_url = url_for('home', date=nav_date) if nav_date else url_for('home') %}
 
+<script>
+    // Applied as early as possible (before the rest of the page renders) to avoid
+    // a flash of the wrong theme on load.
+    (function() {
+        var stored = localStorage.getItem('newro-dark-mode');
+        var wantsDark = stored === null
+            ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+            : stored === '1';
+        document.body.classList.toggle('dark-mode', wantsDark);
+    })();
+</script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
 
 <nav class="app-navbar{% if navbar_compact|default(false) %} app-navbar--compact{% endif %}{% if navbar_flush|default(false) %} app-navbar--flush{% endif %}" aria-label="Primary navigation">
@@ -15,6 +26,9 @@
         <span class="app-navbar__title">{{ navbar_title|default('Production Control') }}</span>
     </div>
     <div class="app-navbar__actions">
+        <button type="button" id="themeToggleBtn" class="app-navbar__theme-toggle" aria-label="Toggle dark mode" aria-pressed="false" title="Toggle dark mode">
+            <span class="app-navbar__theme-icon" aria-hidden="true"></span>
+        </button>
         {% if active_page == 'home' %}
             <!-- <a href="{{ url_for('batch_entry', date=current_date) }}" class="app-navbar__link app-navbar__link--entry">Enter Data</a> -->
             <a href="{{ url_for('products_manager', date=current_date) }}" class="app-navbar__link">Product Manager</a>
@@ -60,5 +74,27 @@
         } else {
             initAppDatePickers();
         }
+    })();
+</script>
+<script>
+    (function() {
+        var btn = document.getElementById('themeToggleBtn');
+        if (!btn) return;
+        var icon = btn.querySelector('.app-navbar__theme-icon');
+
+        function reflectState() {
+            var isDark = document.body.classList.contains('dark-mode');
+            icon.textContent = isDark ? '☀️' : '🌙';
+            btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+            btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+        }
+
+        btn.addEventListener('click', function() {
+            var isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('newro-dark-mode', isDark ? '1' : '0');
+            reflectState();
+        });
+
+        reflectState();
     })();
 </script>

@@ -35,4 +35,6 @@
         
         /* Inline Edit Elements */
         .edit-input { padding: 7px; width: 90%; box-sizing: border-box; border: 1px solid var(--primary); border-radius: 5px; font: inherit; }
+        body.dark-mode th { background: var(--surface-tint); }
+        body.dark-mode .alert-danger { color: #d98a8a; }
         @media (max-width: 700px) { .container { margin: 0 12px 24px; padding: 18px; } table { display: block; overflow-x: auto; } }

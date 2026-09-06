@@ -18,3 +18,14 @@
     #authPinModal .btn:active { transform: translateY(0) scale(0.97); }
     #authPinModal .btn-close { width: 24px; height: 24px; border: 0; border-radius: 4px; background: transparent; font-size: 1.2rem; cursor: pointer; } #authPinModal .btn-close::before { content: '×'; }
     .modal-backdrop { position: fixed; inset: 0; z-index: 1050; background: #000; } .modal-backdrop.show { opacity: .45; }
+
+    body.dark-mode #authPinModal .modal-content { background: var(--surface, #1b2027); border-color: rgba(255,255,255,.1); box-shadow: 0 12px 30px rgba(0,0,0,.5); }
+    body.dark-mode #authPinModal .modal-header, body.dark-mode #authPinModal .modal-footer { border-color: var(--border, #2b3138); }
+    body.dark-mode #authPinModal .modal-title { color: var(--text, #e8eaed); }
+    body.dark-mode #authPinModal .form-label { color: var(--text, #e8eaed); }
+    body.dark-mode #authPinModal .text-secondary { color: var(--muted, #9aa4ad); }
+    body.dark-mode #authPinModal .form-control { background: var(--page-bg, #12161a); border-color: var(--border, #2b3138); color: var(--text, #e8eaed); }
+    body.dark-mode #authPinModal .btn-light { background: var(--surface-tint, #202b1c); border-color: var(--border, #2b3138) !important; color: var(--text, #e8eaed); }
+    body.dark-mode #authPinModal .btn-light:hover { background: var(--border, #2b3138); }
+    body.dark-mode .modal-backdrop { background: #000; }
+    body.dark-mode .modal-backdrop.show { opacity: .65; }
