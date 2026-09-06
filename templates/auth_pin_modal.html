@@ -61,6 +61,16 @@
             });
         }
 
+        function reauthenticate(prompt = 'Your session has expired. Enter your supervisor PIN to continue.') {
+            return requestPin(prompt).then((pin) => fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'pin=' + encodeURIComponent(pin)
+            }).then((response) => {
+                if (response.url.includes('/login')) throw new Error('Incorrect PIN.');
+            }));
+        }
+
         function protectForm(form, prompt) {
             requestPin(prompt).then((pin) => {
                 let pinField = form.querySelector('input[name="auth_pin"]');
@@ -76,6 +86,6 @@
             return false;
         }
 
-        return { requestPin, protectForm };
+        return { requestPin, protectForm, reauthenticate };
     })();
 </script>

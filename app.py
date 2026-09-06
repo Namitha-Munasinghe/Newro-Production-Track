@@ -173,6 +173,8 @@ def require_login():
     if request.endpoint in PUBLIC_ENDPOINTS or request.endpoint is None:
         return
     if not session.get('authenticated'):
+        if request.path.startswith('/api/'):
+            return jsonify({'status': 'error', 'message': 'Session expired. Please log in again.'}), 401
         next_target = request.full_path if request.query_string else request.path
         return redirect(url_for('login', next=next_target))
 

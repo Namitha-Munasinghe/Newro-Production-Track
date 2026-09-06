@@ -247,7 +247,14 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-        }).then(response => response.json());
+        }).then(response => {
+            if (response.status === 401) {
+                return SupervisorAuthorization
+                    .reauthenticate('Your session timed out from inactivity. Enter your supervisor PIN to continue and save your changes.')
+                    .then(() => postBatchPayload(payload));
+            }
+            return response.json();
+        });
     }
 
     function revokeChanges() {
