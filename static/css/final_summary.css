@@ -66,8 +66,8 @@
             background: #ffffff;
         }
 
-        .card-night { border-top: 3px solid #17a2b8; }
-        .card-day { border-top: 3px solid #EEBF49; }
+        .card-night { border-top: 3px solid #2d6e42; }
+        .card-day { border-top: 3px solid #d9a441; }
         .card h3 { margin-top: 0; font-size: 0.88rem; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 8px; }
 
         .stat-table { width: 100%; border-collapse: collapse; }

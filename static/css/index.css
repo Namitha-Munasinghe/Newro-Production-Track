@@ -200,8 +200,8 @@
         .btn-summary:active { transform: translateY(0) scale(0.98); box-shadow: 0 1px 3px rgba(var(--primary-rgb, 68, 148, 48), 0.3); }
 
         /* Shift-specific colors, echoing the night/day identity used elsewhere in the app */
-        .btn-add-night { background-color: #17a2b8; box-shadow: 0 1px 2px rgba(23, 162, 184, 0.3); }
-        .btn-add-night:hover { background-color: #128194; box-shadow: 0 4px 10px rgba(23, 162, 184, 0.35); }
+        .btn-add-night { background-color: var(--night, #2d6e42); box-shadow: 0 1px 2px rgba(var(--night-rgb, 45, 110, 66), 0.3); }
+        .btn-add-night:hover { background-color: var(--night-dark, #245939); box-shadow: 0 4px 10px rgba(var(--night-rgb, 45, 110, 66), 0.35); }
         .btn-add-day { background-color: var(--edit, #EEBF49); box-shadow: 0 1px 2px rgba(var(--edit-rgb, 238, 191, 73), 0.3); }
         .btn-add-day:hover { background-color: var(--edit-dark, #CAA23E); box-shadow: 0 4px 10px rgba(var(--edit-rgb, 238, 191, 73), 0.35); }
 

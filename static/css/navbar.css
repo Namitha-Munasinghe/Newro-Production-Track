@@ -2,13 +2,17 @@
         --primary: #449430;
         --primary-dark: #3A7E29;
         --primary-rgb: 68, 148, 48;
-        --edit: #EEBF49;
-        --edit-dark: #CAA23E;
-        --edit-rgb: 238, 191, 73;
+        --edit: #d9a441;
+        --edit-dark: #c08f37;
+        --edit-rgb: 217, 164, 65;
+        --night: #2d6e42;
+        --night-dark: #245939;
+        --night-rgb: 45, 110, 66;
         --table-outline: #DBF5A2;
         --accent-tint: #F1FBE3;
         --secondary: #6c757d;
         --header-dark: #24312a;
+        --header-gradient: linear-gradient(135deg, #2e4035 0%, #1c261f 100%);
         --page-bg: #f7faf3;
         --surface: #ffffff;
         --surface-tint: #f0f9e4;
@@ -17,11 +21,10 @@
         --muted: #6c757d;
         --success: #449430;
         --success-dark: #29591D;
-        --warning: #EEBF49;
-        --danger: #C64848;
-        --danger-dark: #A83D3D;
-        --danger-rgb: 198, 72, 72;
-        --info: #17a2b8;
+        --warning: #d9a441;
+        --danger: #b5563f;
+        --danger-dark: #9c4732;
+        --danger-rgb: 181, 86, 63;
         --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
         --focus-ring: 0 0 0 3px rgba(68, 148, 48, 0.18);
     }
@@ -32,10 +35,14 @@
         --edit: #c99a49;
         --edit-dark: #ad8340;
         --edit-rgb: 201, 154, 73;
+        --night: #4a9d72;
+        --night-dark: #3c8460;
+        --night-rgb: 74, 157, 114;
         --table-outline: #33402c;
         --accent-tint: #1b2a18;
         --secondary: #9aa4ad;
         --header-dark: #182016;
+        --header-gradient: linear-gradient(135deg, #212d1b 0%, #10140d 100%);
         --page-bg: #12161a;
         --surface: #1b2027;
         --surface-tint: #202b1c;
@@ -45,10 +52,9 @@
         --success: #4f9e42;
         --success-dark: #7cbf6b;
         --warning: #c99a49;
-        --danger: #b85c5c;
-        --danger-dark: #9c4c4c;
-        --danger-rgb: 184, 92, 92;
-        --info: #2e9db3;
+        --danger: #c2694f;
+        --danger-dark: #a8563f;
+        --danger-rgb: 194, 105, 79;
         --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
         --focus-ring: 0 0 0 3px rgba(79, 158, 66, 0.35);
     }
@@ -62,6 +68,7 @@
         margin-bottom: 24px;
         padding: 0 32px;
         background: var(--header-dark);
+        background: var(--header-gradient);
         box-shadow: var(--shadow-sm);
         flex-wrap: wrap;
     }

@@ -15,8 +15,8 @@
         .top-controls { display: flex; gap: 14px; align-items: center; }
         
         /* Shift Toggle Control */
-        .shift-color-night { color: #8e44ad; }
-        .shift-color-day { color: #C69420; }
+        .shift-color-night { color: var(--night, #2d6e42); }
+        .shift-color-day { color: var(--edit-dark, #C69420); }
         .shift-toggle-container {
             display: flex;
             background: #eef1f4;

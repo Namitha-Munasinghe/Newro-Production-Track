@@ -126,7 +126,7 @@
             background: var(--card-bg);
         }
 
-        .card-night { border-top: 3px solid var(--info, #17a2b8); }
+        .card-night { border-top: 3px solid var(--night, #2d6e42); }
         .card-day { border-top: 3px solid var(--warning, #EEBF49); }
         .card h3 { margin-top: 0; font-size: 0.9rem; font-weight: 650; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px; }
 
@@ -219,7 +219,7 @@
         .action-row__left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
         .btn-summary-view {
-            background-color: #17a2b8;
+            background-color: var(--primary, #449430);
             color: white;
             padding: 9px 18px;
             border: none;
