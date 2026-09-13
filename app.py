@@ -107,27 +107,35 @@ def verify_system_pin(entered_pin):
         or (bool(override_key) and hmac.compare_digest(candidate, override_key))
     )
 
+# Backoff schedule (seconds) between retries of a write that hit SQLite's
+# 'readonly database' error. On Windows this shows up when the machine wakes
+# from sleep after sitting idle -- the drive can come back mounted read-only
+# for anywhere from under a second to several seconds while the OS finishes
+# remounting it, and antivirus/OneDrive/backup software can hold a similar
+# transient lock. A single quick retry isn't long enough to reliably outlast
+# that; this spreads retries across roughly 15 seconds before giving up.
+DB_RETRY_BACKOFF_SECONDS = [0.5, 1, 2, 3, 4, 4.5]
+
 def run_with_db_retry(write_fn):
     """Run `write_fn` (which stages changes via db.session and does not itself
-    commit) and commit, retrying once after disposing the engine if the write
-    hits SQLite's 'readonly database' error. On Windows this shows up when
-    antivirus/OneDrive/backup software briefly locks the db file -- often
-    right as the machine wakes from sleep after the app sat idle -- and the
-    long-lived connection this app already had open still points at that
-    now-stale file handle. Disposing forces a fresh connection, which picks
-    up the file's real, current state instead of the stale one.
+    commit) and commit, retrying on SQLite's 'readonly database' error. The
+    long-lived connection this app already had open points at a now-stale
+    file handle in that case; disposing the engine before each retry forces a
+    fresh connection, which picks up the file's real, current state instead.
     """
-    try:
-        write_fn()
-        db.session.commit()
-    except OperationalError as e:
-        if 'readonly database' not in str(e).lower():
-            raise
-        db.session.rollback()
-        time.sleep(0.3)
-        db.engine.dispose()
-        write_fn()
-        db.session.commit()
+    for attempt, delay in enumerate([0] + DB_RETRY_BACKOFF_SECONDS):
+        if delay:
+            time.sleep(delay)
+        try:
+            if attempt:
+                db.session.rollback()
+                db.engine.dispose()
+            write_fn()
+            db.session.commit()
+            return
+        except OperationalError as e:
+            if 'readonly database' not in str(e).lower() or attempt == len(DB_RETRY_BACKOFF_SECONDS):
+                raise
 
 # --- DATABASE SEEDING ---
 def seed_products():
