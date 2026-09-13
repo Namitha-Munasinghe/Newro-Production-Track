@@ -8,6 +8,7 @@
 </head>
 <body>
 
+{% from 'icons.html' import icon %}
 {% set active_page = 'entry' %}
 {% set navbar_title = 'Shift Data Entry' %}
 {% set navbar_flush = true %}
@@ -21,9 +22,9 @@
     <div class="top-controls">
         <!-- Controls placed to the LEFT of the date picker -->
         <div class="edit-controls-group">
-            <button id="btn-edit-toggle" class="btn-edit-mode" onclick="enableEditMode()">✏️ Edit</button>
-            <button id="btn-save-toggle" class="btn-save-mode" onclick="saveManualChanges()">💾 Save Changes</button>
-            <button id="btn-revoke-toggle" class="btn-revoke-mode" onclick="revokeChanges()">🚫 Discard Changes</button>
+            <button id="btn-edit-toggle" class="btn-edit-mode" onclick="enableEditMode()">{{ icon('edit') }} Edit</button>
+            <button id="btn-save-toggle" class="btn-save-mode" onclick="saveManualChanges()">{{ icon('save') }} Save Changes</button>
+            <button id="btn-revoke-toggle" class="btn-revoke-mode" onclick="revokeChanges()">{{ icon('cancel') }} Discard Changes</button>
         </div>
 
         <input type="date"
@@ -34,8 +35,8 @@
 
         <!-- Swapped order: Night Shift on left, Day Shift on right -->
         <div class="shift-toggle-container">
-            <button class="shift-btn{{ ' active-night' if initial_shift == 'night' else '' }}" id="btn-night" onclick="setShift('night')">🌙 Night Shift</button>
-            <button class="shift-btn{{ ' active-day' if initial_shift == 'day' else '' }}" id="btn-day" onclick="setShift('day')">☀️ Day Shift</button>
+            <button class="shift-btn{{ ' active-night' if initial_shift == 'night' else '' }}" id="btn-night" onclick="setShift('night')">{{ icon('moon') }} Night Shift</button>
+            <button class="shift-btn{{ ' active-day' if initial_shift == 'day' else '' }}" id="btn-day" onclick="setShift('day')">{{ icon('sun') }} Day Shift</button>
         </div>
     </div>
 </div>
@@ -43,7 +44,10 @@
 <div class="dashboard-container">
     <!-- SIDEBAR -->
     <div class="sidebar">
-        <input type="text" id="product-search" class="search-box" placeholder="🔍 Search product..." onkeyup="filterProducts()">
+        <div class="app-search">
+            {{ icon('search') }}
+            <input type="text" id="product-search" class="search-box" placeholder="Search product..." onkeyup="filterProducts()">
+        </div>
         <div class="product-list" id="product-list">
             {% for product in products %}
             <div class="product-item js-product-item" 
@@ -51,7 +55,7 @@
                  data-code="{{ product.code }}" 
                  data-name="{{ product.name }}">
                 <div><strong>{{ product.code }}</strong> - {{ product.name }}</div>
-                <span class="badge" id="badge-{{ product.id }}">✓ Logged</span>
+                <span class="badge" id="badge-{{ product.id }}">{{ icon('check') }} Logged</span>
             </div>
             {% else %}
             <div style="text-align: center; color: #7f8c8d; margin-top: 20px;">No products found in database.</div>
@@ -66,7 +70,7 @@
         </div>
 
         <div id="empty-state" class="empty-workspace-state">
-            <h3>👈 Select a product from the left list to start entering batches</h3>
+            <h3>{{ icon('point') }} Select a product from the left list to start entering batches</h3>
             <p>Use <strong>Enter/Arrows</strong> to navigate fields and <strong>Left/Right Arrows</strong> to jump between cards.</p>
         </div>
 
@@ -85,6 +89,7 @@
     let isPreviousDate = false;
     let isEditMode = false;
     let historicalAuthPin = '';
+    const ICON_TRASH = {{ icon('trash')|tojson }};
 
     document.addEventListener('DOMContentLoaded', function() {
         const productList = document.getElementById('product-list');
@@ -131,7 +136,7 @@
         } else {
             displayEl.classList.add('is-not-today');
             displayEl.classList.remove('is-today');
-            displayEl.title = "⚠️ Caution: Viewing Historical/Future Date";
+            displayEl.title = "Caution: Viewing Historical/Future Date";
 
             // Check if selected date is strictly prior to today
             isPreviousDate = selectedDate < todayStr;
@@ -384,7 +389,7 @@
                 <div class="card-footer-controls">
                     <span class="save-status" id="save-status-${productId}">Loaded</span>
                     <button class="btn-delete-card" onclick="deleteCardWithConfirmation(${productId})" title="Delete card data">
-                        🗑️
+                        ${ICON_TRASH}
                     </button>
                 </div>
             </div>

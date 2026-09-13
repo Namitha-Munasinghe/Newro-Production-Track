@@ -8,6 +8,7 @@
 </head>
 <body>
 
+{% from 'icons.html' import icon %}
 {% set active_page = 'home' %}
 {% set navbar_title = 'Shift Production Sheet' %}
 {% include 'navbar.html' %}
@@ -16,7 +17,7 @@
     <!-- TOP HEADER -->
     <div class="header-top">
         <h2>Poultry Shift Production Sheet</h2>
-        <a href="/summary?date={{ current_date }}" class="btn-add-data-nav">📊 View Summary</a>
+        <a href="/summary?date={{ current_date }}" class="btn-add-data-nav">{{ icon('chart') }} View Summary</a>
     </div>
     <hr>
 
@@ -33,11 +34,14 @@
             <form id="date-form" method="GET" action="/">
                 <label for="date"><strong>DATE:</strong></label>
                 <input type="date" id="date" name="date" class="app-date-input js-flatpickr" value="{{ current_date }}" onchange="this.form.submit()" required>
-                <button type="button" id="btn-today" class="btn-today" onclick="goToToday()" title="Jump to today's date">📍 Today</button>
+                <button type="button" id="btn-today" class="btn-today" onclick="goToToday()" title="Jump to today's date">{{ icon('today') }} <span class="btn-today__label">Today</span></button>
             </form>
         </div>
         <div class="search-section">
-            <input type="text" id="search-box" class="search-input" placeholder="🔍 Quick search product code or description...">
+            <div class="app-search">
+                {{ icon('search') }}
+                <input type="text" id="search-box" class="search-input" placeholder="Quick search product code or description...">
+            </div>
         </div>
     </div>
 
@@ -115,10 +119,10 @@
         <div class="button-group__shift-actions">
             <div class="shift-action-cell shift-action-cell--spacer"></div>
             <div class="shift-action-cell">
-                <a href="{{ url_for('batch_entry', date=current_date, shift='night') }}" class="btn-summary btn-add-night js-btn-add-data">🌙 Add Night Shift Batch</a>
+                <a href="{{ url_for('batch_entry', date=current_date, shift='night') }}" class="btn-summary btn-add-night js-btn-add-data">{{ icon('moon') }} Add Night Shift Batch</a>
             </div>
             <div class="shift-action-cell">
-                <a href="{{ url_for('batch_entry', date=current_date, shift='day') }}" class="btn-summary btn-add-day js-btn-add-data">☀️ Add Day Shift Batch</a>
+                <a href="{{ url_for('batch_entry', date=current_date, shift='day') }}" class="btn-summary btn-add-day js-btn-add-data">{{ icon('sun') }} Add Day Shift Batch</a>
             </div>
         </div>
 
@@ -127,12 +131,12 @@
             <form method="POST" action="/log/delete" style="display: inline; margin: 0;" onsubmit="return SupervisorAuthorization.protectForm(this, 'Enter your supervisor PIN to delete logs for {{ current_date }}.')">
                 <input type="hidden" name="date" value="{{ current_date }}">
                 <button type="submit" class="btn-delete-icon" title="Clear/Delete logs for {{ current_date }}">
-                    🗑️
+                    {{ icon('trash') }}
                 </button>
             </form>
         {% else %}
             <button class="btn-delete-icon disabled" title="No logs available to delete" disabled>
-                🗑️
+                {{ icon('trash') }}
             </button>
         {% endif %}
     </div>
@@ -228,7 +232,7 @@
             controlsSection.classList.remove('is-past-future');
 
             addDataBtns.forEach(btn => btn.classList.remove('is-previous-date'));
-            if (btnToday) { btnToday.disabled = true; btnToday.classList.add('is-current'); btnToday.textContent = '📍 Viewing Today'; }
+            if (btnToday) { btnToday.disabled = true; btnToday.classList.add('is-current'); btnToday.querySelector('.btn-today__label').textContent = 'Viewing Today'; }
         } else {
             controlsSection.classList.add('is-past-future');
             controlsSection.classList.remove('is-today');
@@ -239,7 +243,7 @@
             } else {
                 addDataBtns.forEach(btn => btn.classList.remove('is-previous-date'));
             }
-            if (btnToday) { btnToday.disabled = false; btnToday.classList.remove('is-current'); btnToday.textContent = '📍 Today'; }
+            if (btnToday) { btnToday.disabled = false; btnToday.classList.remove('is-current'); btnToday.querySelector('.btn-today__label').textContent = 'Today'; }
         }
     }
 

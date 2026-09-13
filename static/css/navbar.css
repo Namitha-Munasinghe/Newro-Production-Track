@@ -117,6 +117,16 @@
     .app-navbar__theme-toggle:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.32); transform: translateY(-1px); }
     .app-navbar__theme-toggle:active { transform: translateY(0); }
     .app-navbar__theme-toggle:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    .app-icon {
+        width: 1em;
+        height: 1em;
+        vertical-align: -0.15em;
+        flex-shrink: 0;
+    }
+    .app-navbar__theme-toggle .app-icon { width: 1.05em; height: 1.05em; vertical-align: middle; }
+    .app-search { position: relative; display: flex; align-items: center; width: 100%; }
+    .app-search .app-icon { position: absolute; left: 12px; color: var(--muted); pointer-events: none; }
+    .app-search input { padding-left: 34px !important; }
     input[type="date"], .app-date-input {
         min-height: 40px;
         padding: 8px 10px 8px 14px;

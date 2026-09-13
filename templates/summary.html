@@ -8,6 +8,7 @@
 </head>
 <body>
 
+{% from 'icons.html' import icon %}
 {% set active_page = 'summary' %}
 {% set navbar_title = 'Daily Summary & Reconciliation' %}
 {% include 'navbar.html' %}
@@ -26,7 +27,7 @@
         <form method="GET" action="/summary" class="date-picker-form">
             <label for="date"><strong>Selected Date:</strong></label>
             <input type="date" id="date" name="date" class="app-date-input js-flatpickr" value="{{ selected_date }}" onchange="this.form.submit()">
-            <button type="button" class="btn-edit" id="editToggleBtn" style="display: none;" onclick="enableEditing()">✏️ Edit Summary</button>
+            <button type="button" class="btn-edit" id="editToggleBtn" style="display: none;" onclick="enableEditing()">{{ icon('edit') }} Edit Summary</button>
         </form>
         <div>
             <strong>Grand Overall Yield:</strong>
@@ -40,12 +41,12 @@
 
         <div class="input-section-card">
             <div class="input-section-header">
-                <h3>📋 Enter Before-Processing Values</h3>
+                <h3>{{ icon('report') }} Enter Before-Processing Values</h3>
             </div>
 
             <div class="grid-2" style="margin-bottom: 0;">
                 <div class="card card-night">
-                    <h3>🌙 Night Shift (Live Input)</h3>
+                    <h3>{{ icon('moon') }} Night Shift (Live Input)</h3>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Before Process Birds</label>
@@ -59,7 +60,7 @@
                 </div>
 
                 <div class="card card-day">
-                    <h3>☀️ Day Shift (Live Input)</h3>
+                    <h3>{{ icon('sun') }} Day Shift (Live Input)</h3>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Before Process Birds</label>
@@ -75,17 +76,17 @@
 
             <div class="calc-btn-wrapper">
                 <button type="submit" class="btn-calc-save" id="saveCalcBtn" onclick="return handleCalculateAndSave(event)">
-                    💾 Save
+                    <span id="saveCalcBtnContent">{{ icon('save') }} Save</span>
                 </button>
                 <button type="button" class="btn-discard" id="discardBtn" style="display: none;" onclick="discardEdits()">
-                    ✖ Discard
+                    {{ icon('close') }} Discard
                 </button>
             </div>
         </div>
 
         <div class="grid-2">
             <div class="card card-night">
-                <h3>🌙 Night Shift Summary</h3>
+                <h3>{{ icon('moon') }} Night Shift Summary</h3>
                 <table class="stat-table">
                     <tr><td>After-Process Birds Total:</td><td id="night_after_birds_display">{{ tot_night_after_birds }}</td></tr>
                     <tr><td>After-Process Weight Total:</td><td id="night_after_weight_display">{{ "%.2f"|format(tot_night_after_weight) }} kg</td></tr>
@@ -97,7 +98,7 @@
             </div>
 
             <div class="card card-day">
-                <h3>☀️ Day Shift Summary</h3>
+                <h3>{{ icon('sun') }} Day Shift Summary</h3>
                 <table class="stat-table">
                     <tr><td>After-Process Birds Total:</td><td id="day_after_birds_display">{{ tot_day_after_birds }}</td></tr>
                     <tr><td>After-Process Weight Total:</td><td id="day_after_weight_display">{{ "%.2f"|format(tot_day_after_weight) }} kg</td></tr>
@@ -113,7 +114,7 @@
 
         <div class="grid-2">
             <div class="card card-night">
-                <h3>🌙 Night Shift Items</h3>
+                <h3>{{ icon('moon') }} Night Shift Items</h3>
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -151,7 +152,7 @@
             </div>
 
             <div class="card card-day">
-                <h3>☀️ Day Shift Items</h3>
+                <h3>{{ icon('sun') }} Day Shift Items</h3>
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -192,10 +193,10 @@
         <!-- UPDATED ACTION ROW: SEE FINAL SUMMARY BUTTON -->
         <div class="action-row">
             <div class="action-row__left">
-                <a href="#" id="seeFinalSummaryBtn" class="btn-summary-view" onclick="redirectToFinalSummary(event)">📋 Summary Report</a>
-                <a href="#" id="viewBreakdownBtn" class="btn-breakdown-view" onclick="redirectToBreakdown(event)">📦 Product Breakdown</a>
+                <a href="#" id="seeFinalSummaryBtn" class="btn-summary-view" onclick="redirectToFinalSummary(event)">{{ icon('report') }} Summary Report</a>
+                <a href="#" id="viewBreakdownBtn" class="btn-breakdown-view" onclick="redirectToBreakdown(event)">{{ icon('box') }} Product Breakdown</a>
             </div>
-            <button type="submit" class="btn-delete" formaction="/summary/delete" onclick="this.form.action = this.formAction; return SupervisorAuthorization.protectForm(this.form, 'Enter your supervisor PIN to delete summary data for {{ selected_date }}.')">🗑️ Delete Summary</button>
+            <button type="submit" class="btn-delete" formaction="/summary/delete" onclick="this.form.action = this.formAction; return SupervisorAuthorization.protectForm(this.form, 'Enter your supervisor PIN to delete summary data for {{ selected_date }}.')">{{ icon('trash') }} Delete Summary</button>
         </div>
     </form>
 </main>
@@ -212,6 +213,8 @@
     let isTodayDate = false;
     let isHistoricalDate = false;
     let summaryAuthPin = '';
+    const ICON_SAVE = {{ icon('save')|tojson }};
+    const ICON_LOCK = {{ icon('lock')|tojson }};
 
     function hasBeforeProcessingValues() {
         const ids = ['night_b_weight', 'night_b_birds', 'day_b_weight', 'day_b_birds'];
@@ -229,7 +232,7 @@
         }
 
         AppFeedback.confirm({
-            title: '⚠️ Before-processing values are 0',
+            title: 'Before-processing values are 0',
             message: 'No before-processing birds or weight have been entered for either shift yet, so yield recovery and shrink figures in the summary will show as 0%. Enter and save those values first for an accurate report, or continue anyway.',
             confirmText: 'Continue Anyway',
             variant: 'danger'
@@ -289,17 +292,18 @@
         });
 
         const saveBtn = document.getElementById('saveCalcBtn');
+        const saveBtnContent = document.getElementById('saveCalcBtnContent');
         const discardBtn = document.getElementById('discardBtn');
 
         if (enabled) {
             saveBtn.disabled = false;
-            saveBtn.innerText = "💾 Save";
+            saveBtnContent.innerHTML = ICON_SAVE + ' Save';
             if (!isTodayDate) {
                 discardBtn.style.display = 'inline-block';
             }
         } else {
             saveBtn.disabled = true;
-            saveBtn.innerText = "🔒 Enable Edit to Save";
+            saveBtnContent.innerHTML = ICON_LOCK + ' Enable Edit to Save';
             discardBtn.style.display = 'none';
         }
     }

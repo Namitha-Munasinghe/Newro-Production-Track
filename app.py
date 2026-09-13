@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import OperationalError
 from datetime import datetime, timezone, timedelta
 import hmac
 import os
 import sys
+import time
 
 # Running as a PyInstaller-frozen desktop build vs. the normal `python app.py` web app.
 # Frozen builds extract templates/static into a temp dir (sys._MEIPASS) and must store
@@ -104,6 +106,28 @@ def verify_system_pin(entered_pin):
         hmac.compare_digest(candidate, stored_pin)
         or (bool(override_key) and hmac.compare_digest(candidate, override_key))
     )
+
+def run_with_db_retry(write_fn):
+    """Run `write_fn` (which stages changes via db.session and does not itself
+    commit) and commit, retrying once after disposing the engine if the write
+    hits SQLite's 'readonly database' error. On Windows this shows up when
+    antivirus/OneDrive/backup software briefly locks the db file -- often
+    right as the machine wakes from sleep after the app sat idle -- and the
+    long-lived connection this app already had open still points at that
+    now-stale file handle. Disposing forces a fresh connection, which picks
+    up the file's real, current state instead of the stale one.
+    """
+    try:
+        write_fn()
+        db.session.commit()
+    except OperationalError as e:
+        if 'readonly database' not in str(e).lower():
+            raise
+        db.session.rollback()
+        time.sleep(0.3)
+        db.engine.dispose()
+        write_fn()
+        db.session.commit()
 
 # --- DATABASE SEEDING ---
 def seed_products():
@@ -288,29 +312,30 @@ def save_batches():
                 'message': 'Supervisor PIN is required to edit historical entries.'
             }), 403
 
-        for entry in entries:
-            product_id = entry.get('product_id')
-            batches = entry.get('batches', [])
+        def apply_batch_changes():
+            for entry in entries:
+                product_id = entry.get('product_id')
+                batches = entry.get('batches', [])
 
-            EntryLog.query.filter_by(date=entry_date, shift=shift, product_id=product_id).delete()
+                EntryLog.query.filter_by(date=entry_date, shift=shift, product_id=product_id).delete()
 
-            for b in batches:
-                raw_birds = b.get('birds')
-                raw_weight = b.get('weight')
-                
-                birds_val = int(raw_birds) if raw_birds not in (None, '', 'null') else None
-                weight_val = float(raw_weight) if raw_weight not in (None, '', 'null') else None
+                for b in batches:
+                    raw_birds = b.get('birds')
+                    raw_weight = b.get('weight')
 
-                if birds_val is not None or weight_val is not None:
-                    db.session.add(EntryLog(
-                        date=entry_date,
-                        shift=shift,
-                        product_id=product_id,
-                        birds=birds_val,
-                        weight=weight_val
-                    ))
+                    birds_val = int(raw_birds) if raw_birds not in (None, '', 'null') else None
+                    weight_val = float(raw_weight) if raw_weight not in (None, '', 'null') else None
 
-        db.session.commit()
+                    if birds_val is not None or weight_val is not None:
+                        db.session.add(EntryLog(
+                            date=entry_date,
+                            shift=shift,
+                            product_id=product_id,
+                            birds=birds_val,
+                            weight=weight_val
+                        ))
+
+        run_with_db_retry(apply_batch_changes)
         return jsonify({'status': 'success', 'message': f'Saved successfully for {shift.upper()} shift!'})
 
     except Exception as e:

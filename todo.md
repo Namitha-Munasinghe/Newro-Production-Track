@@ -4,6 +4,6 @@ summary page final look and download reports as PDF files -------------------
 to delete products, data, require password ? yes but only the previous data -----------------
 possibaly a login system -----------------
 change the day shift and night shift placement ?------------------
-dark mode ?
+dark mode ? ----------------
 edit funciton for each page ?------------------
 automatic day and night change in the data entry page ?-------------------

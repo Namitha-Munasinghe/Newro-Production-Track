@@ -2,6 +2,7 @@
   Reusable navigation. Set `active_page` before including this file:
   home, entry, summary, or products.
 #}
+{% from 'icons.html' import icon %}
 {% set nav_date = current_date if current_date is defined else (selected_date if selected_date is defined else none) %}
 {% set log_sheet_url = url_for('home', date=nav_date) if nav_date else url_for('home') %}
 
@@ -27,7 +28,7 @@
     </div>
     <div class="app-navbar__actions">
         <button type="button" id="themeToggleBtn" class="app-navbar__theme-toggle" aria-label="Toggle dark mode" aria-pressed="false" title="Toggle dark mode">
-            <span class="app-navbar__theme-icon" aria-hidden="true"></span>
+            <span class="app-navbar__theme-icon" aria-hidden="true">{{ icon('moon') }}</span>
         </button>
         {% if active_page == 'home' %}
             <!-- <a href="{{ url_for('batch_entry', date=current_date) }}" class="app-navbar__link app-navbar__link--entry">Enter Data</a> -->
@@ -80,11 +81,13 @@
     (function() {
         var btn = document.getElementById('themeToggleBtn');
         if (!btn) return;
-        var icon = btn.querySelector('.app-navbar__theme-icon');
+        var iconEl = btn.querySelector('.app-navbar__theme-icon');
+        var SUN_SVG = {{ icon('sun')|tojson }};
+        var MOON_SVG = {{ icon('moon')|tojson }};
 
         function reflectState() {
             var isDark = document.body.classList.contains('dark-mode');
-            icon.textContent = isDark ? '☀️' : '🌙';
+            iconEl.innerHTML = isDark ? SUN_SVG : MOON_SVG;
             btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
             btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
         }

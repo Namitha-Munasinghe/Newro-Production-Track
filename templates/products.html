@@ -8,6 +8,7 @@
 </head>
 <body>
 
+{% from 'icons.html' import icon %}
 {% set active_page = 'products' %}
 {% set navbar_title = 'Product Manager' %}
 {% include 'navbar.html' %}
@@ -38,7 +39,10 @@
 
     <div class="search-section">
         <h3>Active Master Product List</h3>
-        <input type="text" id="search-box" class="search-input" placeholder="🔍 Filter products by ID or Name...">
+        <div class="app-search">
+            {{ icon('search') }}
+            <input type="text" id="search-box" class="search-input" placeholder="Filter products by ID or Name...">
+        </div>
     </div>
 
     <table>

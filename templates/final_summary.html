@@ -41,10 +41,11 @@
 </head>
 <body>
 
+{% from 'icons.html' import icon %}
     <!-- ACTION BAR ABOVE REPORT -->
     <div class="top-action-bar">
         <a href="/summary?date={{ selected_date }}" class="btn-back">← Back to Summary</a>
-        <button type="button" class="btn-pdf" onclick="downloadPDF()">📄 Download PDF</button>
+        <button type="button" class="btn-pdf" onclick="downloadPDF()"><span id="btnDownloadPdfContent">{{ icon('pdf') }} Download PDF</span></button>
     </div>
 
     <!-- MAIN PRINTABLE CANVAS AREA -->
@@ -55,7 +56,7 @@
                 <small style="color: var(--muted-text);">Production & Yield Breakdown</small>
             </div>
             <div class="date-badge">
-                📅 Date: <strong>{{ selected_date }}</strong>
+                {{ icon('calendar') }} Date: <strong>{{ selected_date }}</strong>
             </div>
         </div>
 
@@ -63,7 +64,7 @@
         <div class="grid-2">
             <!-- Night Shift Card -->
             <div class="card card-night">
-                <h3>🌙 Night Shift Overview</h3>
+                <h3>{{ icon('moon') }} Night Shift Overview</h3>
                 <table class="stat-table">
                     <tr>
                         <td>Weight Difference:</td>
@@ -92,7 +93,7 @@
 
             <!-- Day Shift Card -->
             <div class="card card-day">
-                <h3>☀️ Day Shift Overview</h3>
+                <h3>{{ icon('sun') }} Day Shift Overview</h3>
                 <table class="stat-table">
                     <tr>
                         <td>Weight Difference:</td>
@@ -122,6 +123,7 @@
     </main>
 
     <script>
+        const ICON_PDF = {{ icon('pdf')|tojson }};
         // In the desktop app, a normal browser-style download (pdf.save())
         // routinely does nothing in the embedded webview — no error, no file.
         // window.pywebview.api is only present there, so route through a real
@@ -143,7 +145,8 @@
             const element = document.getElementById('pdfContent');
             const selectedDate = "{{ selected_date }}";
             const btn = document.querySelector('.btn-pdf');
-            if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+            const btnContent = document.getElementById('btnDownloadPdfContent');
+            if (btn) { btn.disabled = true; btnContent.textContent = 'Generating…'; }
 
             const originalShadow = element.style.boxShadow;
             element.style.boxShadow = 'none';
@@ -189,7 +192,7 @@
                 await savePdf(pdf, `Summary_${selectedDate}.pdf`);
             } finally {
                 element.style.boxShadow = originalShadow;
-                if (btn) { btn.disabled = false; btn.textContent = '📄 Download PDF'; }
+                if (btn) { btn.disabled = false; btnContent.innerHTML = ICON_PDF + ' Download PDF'; }
             }
         }
     </script>
