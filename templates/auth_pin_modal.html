@@ -34,6 +34,10 @@
         const form = document.getElementById('authPinForm');
         const input = document.getElementById('authPinInput');
         const message = document.getElementById('authPinModalMessage');
+        const title = document.getElementById('authPinModalTitle');
+        const label = modalElement.querySelector('label[for="authPinInput"]');
+        const DEFAULT_TITLE = title.textContent;
+        const DEFAULT_LABEL = label.textContent;
 
         modalElement.addEventListener('shown.bs.modal', () => input.focus());
         modalElement.addEventListener('hidden.bs.modal', () => {
@@ -53,16 +57,22 @@
             action.resolve(input.value);
         });
 
-        function requestPin(prompt = 'Enter your supervisor PIN to continue.') {
+        // `options.title` / `options.label` override the supervisor wording for
+        // the one prompt that isn't supervisor-only (session re-login).
+        function requestPin(prompt = 'Enter your supervisor PIN to continue.', options = {}) {
             return new Promise((resolve, reject) => {
                 pendingAction = { resolve, reject };
                 message.textContent = prompt;
+                title.textContent = options.title || DEFAULT_TITLE;
+                label.textContent = options.label || DEFAULT_LABEL;
                 modal.show();
             });
         }
 
-        function reauthenticate(prompt = 'Your session has expired. Enter your supervisor PIN to continue.') {
-            return requestPin(prompt).then((pin) => fetch('/login', {
+        // Re-login accepts either the operator or supervisor PIN, so don't ask for
+        // the supervisor PIN specifically -- an operator wouldn't know it.
+        function reauthenticate(prompt = 'Your session has expired. Enter your PIN to continue.') {
+            return requestPin(prompt, { title: 'Session expired', label: 'Your PIN' }).then((pin) => fetch('/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: 'pin=' + encodeURIComponent(pin)

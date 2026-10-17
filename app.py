@@ -386,10 +386,15 @@ def save_batches():
 
     try:
         entry_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
-        if entry_date < datetime.now(timezone.utc).date() and not verify_supervisor_pin(data.get('auth_pin')):
+        is_historical = entry_date < datetime.now(timezone.utc).date()
+        # Deleting a whole product card is supervisor-only on any date; editing
+        # today's rows (including clearing them one by one) stays open to operators.
+        is_card_delete = bool(data.get('delete_card'))
+        if (is_historical or is_card_delete) and not verify_supervisor_pin(data.get('auth_pin')):
             return jsonify({
                 'status': 'error',
-                'message': 'Supervisor PIN is required to edit historical entries.'
+                'message': 'Supervisor PIN is required to delete entry data.' if is_card_delete
+                           else 'Supervisor PIN is required to edit historical entries.'
             }), 403
 
         def apply_batch_changes():
