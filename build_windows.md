@@ -33,7 +33,8 @@ python desktop_app.py
 ```
 
 A window titled "Newro Operations" should open with the PIN login screen
-(default PIN: `1234`, unless it's been changed in Settings). Confirm the
+(default supervisor PIN: `1234`, unless it's been changed in Settings; set
+the operator PIN in Settings before handing over). Confirm the
 whole app works end to end here — log in, view the log sheet, open the
 calendar, add a batch — before bundling, since that's much faster to debug
 than a built `.exe`.

@@ -25,7 +25,7 @@
     {% endwith %}
 
     <h3>Add New Product Type</h3>
-    <form method="POST" action="/products">
+    <form method="POST" action="/products" onsubmit="return SupervisorAuthorization.protectForm(this, 'Enter your supervisor PIN to add a new product.')">
         <div class="form-group">
             <label for="code">Product ID / Code </label>
             <input type="text" id="code" name="code" placeholder="e.g., NW00001" required>
@@ -69,7 +69,7 @@
 
             <!-- Hidden Inline Dynamic Editing Form Row State -->
             <tr class="product-row" id="row-edit-{{ product.id }}" style="display: none; background-color: #FDF3DC;">
-                <form action="/products/edit/{{ product.id }}" method="POST">
+                <form action="/products/edit/{{ product.id }}" method="POST" onsubmit="return SupervisorAuthorization.protectForm(this, 'Enter your supervisor PIN to update {{ product.code }}.')">
                     <td>
                         <input type="text" name="code" value="{{ product.code }}" class="edit-input" required>
                     </td>

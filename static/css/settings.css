@@ -9,3 +9,7 @@
         button:active { transform: translateY(0) scale(0.97); box-shadow: 0 1px 3px rgba(var(--primary-rgb), 0.3); }
         .alert { margin-bottom: 18px; padding: 10px 12px; border-radius: 6px; font-weight: 600; } .alert-success { background: rgba(var(--primary-rgb),.12); color: var(--success-dark); } .alert-danger { background: rgba(var(--danger-rgb),.12); color: #8B2F2F; }
         body.dark-mode .alert-danger { color: #d98a8a; }
+        .settings-divider { margin: 28px 0 24px; border: 0; border-top: 1px solid var(--border); }
+        .pin-status { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; vertical-align: 1px; }
+        .pin-status--set { background: rgba(var(--primary-rgb), .14); color: var(--success-dark); }
+        .pin-status--unset { background: rgba(var(--edit-rgb), .18); color: var(--edit-dark); }

@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import OperationalError
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone, timedelta
 import hmac
 import os
+import secrets
 import sys
 import time
 
@@ -31,7 +33,35 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, 'templates'),
     static_folder=os.path.join(BASE_DIR, 'static')
 )
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'poultry_secret_key')
+def load_or_create_secret_key():
+    """Session cookies are signed with this key; anyone who knows it can forge
+    a logged-in session. So instead of a hardcoded fallback (which would be
+    the same on every install and visible in the source/.exe), each install
+    generates its own random key on first run and keeps it next to its
+    database. FLASK_SECRET_KEY, if set, still takes precedence."""
+    env_key = os.environ.get('FLASK_SECRET_KEY')
+    if env_key:
+        return env_key
+    key_dir = get_app_data_dir() if FROZEN else app.instance_path
+    os.makedirs(key_dir, exist_ok=True)
+    key_path = os.path.join(key_dir, 'secret_key')
+    try:
+        with open(key_path, 'r', encoding='utf-8') as f:
+            key = f.read().strip()
+        if key:
+            return key
+    except FileNotFoundError:
+        pass
+    key = secrets.token_hex(32)
+    with open(key_path, 'w', encoding='utf-8') as f:
+        f.write(key)
+    try:
+        os.chmod(key_path, 0o600)  # owner-only where the OS supports it
+    except OSError:
+        pass
+    return key
+
+app.secret_key = load_or_create_secret_key()
 
 if FROZEN:
     db_path = os.path.join(get_app_data_dir(), 'newro_poultry.db')
@@ -88,24 +118,58 @@ class SystemSetting(db.Model):
     key = db.Column(db.String(100), unique=True, nullable=False)
     value = db.Column(db.String(255), nullable=False)
 
-def get_system_pin():
-    """Return the configured master PIN, creating the default on first use."""
-    setting = SystemSetting.query.filter_by(key='master_pin').first()
-    if not setting:
-        setting = SystemSetting(key='master_pin', value='1234')
-        db.session.add(setting)
-        db.session.commit()
-    return setting.value
+# Two roles share the app: the supervisor PIN logs in AND authorizes risky
+# actions (historical edits, deletes, product and PIN changes); the operator
+# PIN only logs in for day-to-day data entry. Both are stored hashed.
+SUPERVISOR_PIN_KEY = 'supervisor_pin'
+OPERATOR_PIN_KEY = 'operator_pin'
+LEGACY_PIN_KEY = 'master_pin'
+DEFAULT_SUPERVISOR_PIN = '1234'
 
-def verify_system_pin(entered_pin):
-    """Accept the stored PIN or the emergency environment override key."""
+def _get_setting(key):
+    return SystemSetting.query.filter_by(key=key).first()
+
+def set_pin(key, new_pin):
+    setting = _get_setting(key)
+    hashed = generate_password_hash(str(new_pin))
+    if setting:
+        setting.value = hashed
+    else:
+        db.session.add(SystemSetting(key=key, value=hashed))
+    db.session.commit()
+
+def init_pins():
+    """Create the supervisor PIN on first run, and migrate the old single
+    plain-text `master_pin` into a hashed supervisor PIN so existing installs
+    keep working with the PIN they already know. The operator PIN starts
+    unset -- only the supervisor can log in until it's configured."""
+    legacy = _get_setting(LEGACY_PIN_KEY)
+    if legacy and not _get_setting(SUPERVISOR_PIN_KEY):
+        db.session.add(SystemSetting(key=SUPERVISOR_PIN_KEY, value=generate_password_hash(legacy.value)))
+    if legacy:
+        db.session.delete(legacy)
+    db.session.commit()
+    if not _get_setting(SUPERVISOR_PIN_KEY):
+        set_pin(SUPERVISOR_PIN_KEY, DEFAULT_SUPERVISOR_PIN)
+
+def _check_pin(key, entered_pin):
+    setting = _get_setting(key)
+    return bool(setting and entered_pin) and check_password_hash(setting.value, str(entered_pin))
+
+def operator_pin_is_set():
+    return _get_setting(OPERATOR_PIN_KEY) is not None
+
+def verify_supervisor_pin(entered_pin):
+    """Accept the supervisor PIN or the emergency environment override key."""
     candidate = str(entered_pin or '')
-    stored_pin = get_system_pin()
     override_key = os.environ.get('MASTER_OVERRIDE_KEY', '')
     return (
-        hmac.compare_digest(candidate, stored_pin)
+        _check_pin(SUPERVISOR_PIN_KEY, candidate)
         or (bool(override_key) and hmac.compare_digest(candidate, override_key))
     )
+
+def verify_operator_pin(entered_pin):
+    return _check_pin(OPERATOR_PIN_KEY, entered_pin)
 
 # Backoff schedule (seconds) between retries of a write that hit SQLite's
 # 'readonly database' error. On Windows this shows up when the machine wakes
@@ -198,7 +262,7 @@ def seed_products():
 with app.app_context():
     db.create_all()
     seed_products()
-    get_system_pin()
+    init_pins()
 
 @app.before_request
 def require_login():
@@ -219,9 +283,17 @@ def login():
         next_url = ''
 
     if request.method == 'POST':
-        if verify_system_pin(request.form.get('pin')):
+        entered_pin = request.form.get('pin')
+        if verify_supervisor_pin(entered_pin):
+            role = 'supervisor'
+        elif verify_operator_pin(entered_pin):
+            role = 'operator'
+        else:
+            role = None
+        if role:
             session.clear()
             session['authenticated'] = True
+            session['role'] = role
             session.permanent = True
             return redirect(next_url or url_for('home'))
         flash("Incorrect PIN. Please try again.", "danger")
@@ -314,7 +386,7 @@ def save_batches():
 
     try:
         entry_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
-        if entry_date < datetime.now(timezone.utc).date() and not verify_system_pin(data.get('auth_pin')):
+        if entry_date < datetime.now(timezone.utc).date() and not verify_supervisor_pin(data.get('auth_pin')):
             return jsonify({
                 'status': 'error',
                 'message': 'Supervisor PIN is required to edit historical entries.'
@@ -351,9 +423,9 @@ def save_batches():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/verify-supervisor-pin', methods=['POST'])
-def verify_supervisor_pin():
+def api_verify_supervisor_pin():
     data = request.get_json(silent=True) or {}
-    if verify_system_pin(data.get('auth_pin')):
+    if verify_supervisor_pin(data.get('auth_pin')):
         return jsonify({'status': 'success'})
     return jsonify({'status': 'error', 'message': 'Invalid supervisor PIN.'}), 403
 
@@ -364,6 +436,9 @@ def products_manager():
     selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
     if request.method == 'POST':
+        if not verify_supervisor_pin(request.form.get('auth_pin')):
+            flash("A valid supervisor PIN is required to add a product.", "danger")
+            return redirect(url_for('products_manager', date=selected_date_str))
         code = request.form.get('code').strip()
         name = request.form.get('name').strip()
         if code and name:
@@ -382,11 +457,14 @@ def products_manager():
 @app.route('/products/edit/<int:id>', methods=['POST'])
 def edit_product(id):
     selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    if not verify_supervisor_pin(request.form.get('auth_pin')):
+        flash("A valid supervisor PIN is required to edit a product.", "danger")
+        return redirect(url_for('products_manager', date=selected_date_str))
     product = Product.query.get(id)
     if not product:
         flash("Product not found.", "danger")
         return redirect(url_for('products_manager', date=selected_date_str))
-        
+
     code = request.form.get('code').strip()
     name = request.form.get('name').strip()
     
@@ -405,7 +483,7 @@ def edit_product(id):
 @app.route('/products/delete/<int:id>', methods=['POST'])
 def delete_product(id):
     selected_date_str = request.args.get('date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    if not verify_system_pin(request.form.get('auth_pin')):
+    if not verify_supervisor_pin(request.form.get('auth_pin')):
         flash("A valid supervisor PIN is required to delete a product.", "danger")
         return redirect(url_for('products_manager', date=selected_date_str))
 
@@ -423,24 +501,30 @@ def delete_product(id):
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
     if request.method == 'POST':
+        target = request.form.get('target')
         current_pin = request.form.get('current_pin')
         new_pin = request.form.get('new_pin', '').strip()
         confirm_pin = request.form.get('confirm_pin', '').strip()
 
-        if not verify_system_pin(current_pin):
-            flash("The current supervisor PIN is incorrect.", "danger")
+        if target not in ('supervisor', 'operator'):
+            flash("Unknown PIN type.", "danger")
+        elif not verify_supervisor_pin(current_pin):
+            flash("The supervisor PIN is incorrect.", "danger")
         elif not new_pin:
-            flash("Enter a new supervisor PIN.", "danger")
+            flash("Enter a new PIN.", "danger")
         elif new_pin != confirm_pin:
             flash("The new PIN and confirmation do not match.", "danger")
+        # The two PINs must differ, or a login couldn't tell the roles apart.
+        elif target == 'supervisor' and verify_operator_pin(new_pin):
+            flash("The supervisor PIN must be different from the operator PIN.", "danger")
+        elif target == 'operator' and verify_supervisor_pin(new_pin):
+            flash("The operator PIN must be different from the supervisor PIN.", "danger")
         else:
-            setting = SystemSetting.query.filter_by(key='master_pin').first()
-            setting.value = new_pin
-            db.session.commit()
-            flash("Supervisor PIN updated successfully.", "success")
+            set_pin(SUPERVISOR_PIN_KEY if target == 'supervisor' else OPERATOR_PIN_KEY, new_pin)
+            flash(f"{target.capitalize()} PIN updated successfully.", "success")
         return redirect(url_for('settings'))
 
-    return render_template('settings.html')
+    return render_template('settings.html', operator_pin_set=operator_pin_is_set())
 
 @app.route('/summary', methods=['GET', 'POST'])
 def summary():
@@ -448,7 +532,7 @@ def summary():
     query_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
 
     if request.method == 'POST':
-        if query_date < datetime.now(timezone.utc).date() and not verify_system_pin(request.form.get('auth_pin')):
+        if query_date < datetime.now(timezone.utc).date() and not verify_supervisor_pin(request.form.get('auth_pin')):
             flash("A valid supervisor PIN is required to edit historical summary data.", "danger")
             return redirect(url_for('summary', date=selected_date))
 
@@ -712,7 +796,7 @@ def product_breakdown():
 @app.route('/summary/delete', methods=['POST'])
 def delete_summary():
     selected_date = request.form.get('date')
-    if not verify_system_pin(request.form.get('auth_pin')):
+    if not verify_supervisor_pin(request.form.get('auth_pin')):
         flash("A valid supervisor PIN is required to delete summary data.", "danger")
         return redirect(url_for('summary', date=selected_date))
 
@@ -725,7 +809,7 @@ def delete_summary():
 @app.route('/log/delete', methods=['POST'])
 def delete_log_entries():
     selected_date = request.form.get('date')
-    if not verify_system_pin(request.form.get('auth_pin')):
+    if not verify_supervisor_pin(request.form.get('auth_pin')):
         flash("A valid supervisor PIN is required to delete production logs.", "danger")
         return redirect(url_for('home', date=selected_date))
 

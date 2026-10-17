@@ -6,3 +6,6 @@ __pycache__/
 build/
 dist/
 *.spec
+
+# Per-install session signing key (generated on first run; never commit)
+instance/secret_key
