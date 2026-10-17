@@ -16,8 +16,13 @@
 
 <!-- TOP NAVBAR -->
 <div class="top-bar">
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <h2>Poultry Shift Data Entry</h2>
+    <div class="top-bar__left">
+        <h2 class="top-bar__title">Poultry Shift Data Entry</h2>
+        <label class="repeat-toggle" title="After entering a weight and pressing Enter, pre-fill the next row's bird count with the same number">
+            <input type="checkbox" id="repeat-birds-toggle">
+            <span class="repeat-toggle__label">Repeat bird count</span>
+            <span class="repeat-toggle__track" aria-hidden="true"></span>
+        </label>
     </div>
     <div class="top-controls">
         <!-- Controls placed to the LEFT of the date picker -->
@@ -90,8 +95,19 @@
     let isEditMode = false;
     let historicalAuthPin = '';
     const ICON_TRASH = {{ icon('trash')|tojson }};
+    let repeatBirdsEnabled = false;
+    try { repeatBirdsEnabled = localStorage.getItem('newro-repeat-birds') === '1'; } catch (e) {}
 
     document.addEventListener('DOMContentLoaded', function() {
+        const repeatToggle = document.getElementById('repeat-birds-toggle');
+        if (repeatToggle) {
+            repeatToggle.checked = repeatBirdsEnabled;
+            repeatToggle.addEventListener('change', function() {
+                repeatBirdsEnabled = repeatToggle.checked;
+                try { localStorage.setItem('newro-repeat-birds', repeatBirdsEnabled ? '1' : '0'); } catch (e) {}
+            });
+        }
+
         const productList = document.getElementById('product-list');
 
         if (productList) {
@@ -429,6 +445,10 @@
         birdsInput.addEventListener('keydown', function(e) {
             handleInputKeydown(e, productId, tr, 'birds');
         });
+        // Once the user types over a pre-filled count, it's theirs, not a suggestion.
+        birdsInput.addEventListener('input', function() {
+            delete birdsInput.dataset.autofilled;
+        });
 
         weightInput.addEventListener('keydown', function(e) {
             handleInputKeydown(e, productId, tr, 'weight');
@@ -481,7 +501,14 @@
                 }
                 if (nextRow) {
                     const nextBirdsInput = nextRow.querySelector('.birds-input');
-                    if (nextBirdsInput) focusAndSelect(nextBirdsInput);
+                    if (nextBirdsInput) {
+                        const currentBirds = tr.querySelector('.birds-input').value;
+                        if (repeatBirdsEnabled && currentBirds !== '' && nextBirdsInput.value === '') {
+                            nextBirdsInput.value = currentBirds;
+                            nextBirdsInput.dataset.autofilled = '1';
+                        }
+                        focusAndSelect(nextBirdsInput);
+                    }
                 }
             }
             return;
@@ -553,6 +580,13 @@
         }
     }
 
+    // A row whose bird count was only pre-filled by "Repeat bird count" and
+    // never given a weight is a suggestion, not data -- don't total or save it.
+    function isUnfinishedAutofill(row) {
+        return row.querySelector('.birds-input').dataset.autofilled === '1'
+            && row.querySelector('.weight-input').value === '';
+    }
+
     function focusAndSelect(input) {
         input.focus();
         setTimeout(() => input.select(), 0);
@@ -577,6 +611,7 @@
         let totalWeight = 0;
 
         card.querySelectorAll('.batch-row').forEach(row => {
+            if (isUnfinishedAutofill(row)) return;
             const birds = parseInt(row.querySelector('.birds-input').value) || 0;
             const weight = parseFloat(row.querySelector('.weight-input').value) || 0;
             totalBirds += birds;
@@ -593,6 +628,7 @@
 
         const batches = [];
         card.querySelectorAll('.batch-row').forEach(row => {
+            if (isUnfinishedAutofill(row)) return;
             const birds = row.querySelector('.birds-input').value;
             const weight = row.querySelector('.weight-input').value;
 

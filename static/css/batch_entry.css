@@ -311,3 +311,21 @@
         body.dark-mode .card-footer { background: var(--surface-tint); border-top-color: var(--border); }
         body.dark-mode .btn-close-card { color: var(--muted); }
         @media (max-width: 800px) { .top-bar { padding: 10px 16px; flex-wrap: wrap; gap: 10px; } .dashboard-container { height: auto; min-height: calc(100vh - 113px); flex-direction: column; overflow: visible; } .sidebar { width: 100%; max-height: 300px; border-right: 0; border-bottom: 1px solid var(--border); } .workspace { overflow: visible; } .cards-grid { grid-template-columns: 1fr; } }
+
+        /* "Repeat bird count" mode switch */
+        .top-bar__left { display: flex; align-items: center; }
+        /* Title box width lines the switch up with "Active Mode" below it:
+           sidebar (320px) + workspace padding (20px) - top-bar padding (32px). */
+        .top-bar__title { width: 308px; flex-shrink: 0; }
+        @media (max-width: 800px) { .top-bar__left { gap: 14px; flex-wrap: wrap; } .top-bar__title { width: auto; } }
+        .repeat-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-size: 0.8rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+        .repeat-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .repeat-toggle__track { position: relative; width: 34px; height: 20px; border-radius: 999px; background: var(--border); transition: background 0.2s ease; flex-shrink: 0; }
+        .repeat-toggle__track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,0.25); transition: transform 0.2s ease; }
+        .repeat-toggle input:checked ~ .repeat-toggle__track { background: var(--primary); }
+        .repeat-toggle input:checked ~ .repeat-toggle__track::after { transform: translateX(14px); }
+        .repeat-toggle input:checked ~ .repeat-toggle__label { color: var(--text); }
+        .repeat-toggle input:focus-visible ~ .repeat-toggle__track { box-shadow: var(--focus-ring); }
+
+        /* Pre-filled bird count that hasn't been confirmed with a weight yet */
+        .batch-row:has(.weight-input:placeholder-shown) .birds-input[data-autofilled="1"] { color: var(--muted); font-style: italic; }
