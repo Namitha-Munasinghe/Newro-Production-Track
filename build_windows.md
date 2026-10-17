@@ -42,11 +42,13 @@ than a built `.exe`.
 ## 3. Build the .exe
 
 ```powershell
-pyinstaller --name "NewroOperations" --onefile --windowed --add-data "templates;templates" --add-data "static;static" desktop_app.py
+python -m PyInstaller --name "NewroOperations" --onefile --windowed --icon "static\img\app.ico" --add-data "templates;templates" --add-data "static;static" desktop_app.py
 ```
 
 - `--onefile` — a single `.exe` the client can double-click, no install step
 - `--windowed` — suppresses the black console window behind the app
+- `--icon` — the Newro logo for the `.exe` file, and (via pywebview, which
+  reads the `.exe`'s own icon) the app window's title bar and taskbar button
 - `--add-data "templates;templates"` / `"static;static"` — bundles the Jinja
   templates and CSS/JS/images into the executable (Windows uses `;` as the
   separator here; on macOS/Linux it's `:`, but this command is Windows-only)
@@ -64,8 +66,6 @@ machine and run it — no Python install needed on their end.
 
 ## Known gaps in this first pass (deliberately deferred)
 
-- **No app icon** — uses the default PyInstaller icon. Add one later with
-  `--icon=path\to\icon.ico`.
 - **No installer** — it's a bare `.exe`, not a "Setup.exe" / MSI with Start
   Menu shortcuts. Fine for testing; worth doing properly before wider rollout.
 - **Unsigned** — Windows SmartScreen will likely show an "Unknown publisher"
@@ -74,6 +74,10 @@ machine and run it — no Python install needed on their end.
   certificate.
 
 ## Troubleshooting
+
+**The `.exe` still shows the old/default icon after rebuilding.** Windows
+caches file icons. Rename the file or move it to another folder and the
+new logo shows up; the icon embedded in the file is already correct.
 
 **App opens but looks faded, calendar doesn't open, buttons seem missing or
 dead, clicking into a product does nothing.** This is the WebView2 Runtime
